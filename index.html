@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IKM iOS Prep Console</title>
+<style>
+  :root{
+    --bg:#0c0e13;
+    --panel:#13161e;
+    --panel-2:#191d28;
+    --line:#262c3b;
+    --ink:#e7e9ef;
+    --ink-dim:#9aa1b2;
+    --ink-faint:#5d6478;
+    --accent:#f05138;        /* swift orange */
+    --accent-2:#ff7a5c;
+    --ok:#3ec98a;
+    --bad:#ef5a6f;
+    --warn:#e7b53c;
+    --grid:rgba(255,255,255,.014);
+    --glow-1:rgba(240,81,56,.10);
+    --glow-2:rgba(62,201,138,.06);
+    --code-bg:#0a0c11;
+    --code-ink:#cdd3e1;
+    --mono:'SF Mono',ui-monospace,SFMono-Regular,Menlo,Monaco,'Cascadia Code','Roboto Mono',monospace;
+    --sans:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro','Helvetica Neue',Helvetica,Arial,sans-serif;
+  }
+  html[data-theme="light"]{
+    --bg:#f5f6f9;
+    --panel:#ffffff;
+    --panel-2:#eef0f5;
+    --line:#d9dde6;
+    --ink:#1a1d26;
+    --ink-dim:#54596b;
+    --ink-faint:#8a90a2;
+    --accent:#d23a1f;        /* slightly deepened for contrast on light */
+    --accent-2:#e85a3c;
+    --ok:#1f9d63;
+    --bad:#d23b54;
+    --warn:#b9851f;
+    --grid:rgba(20,24,40,.035);
+    --glow-1:rgba(240,81,56,.08);
+    --glow-2:rgba(62,201,138,.06);
+    --code-bg:#1b1f2b;
+    --code-ink:#dfe4ef;
+  }
+  html{transition:background-color .25s ease}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg);color:var(--ink);font-family:var(--sans);
+    -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+  body{font-size:16px;line-height:1.47}
+  body{
+    min-height:100vh;
+    background-image:
+      radial-gradient(900px 500px at 85% -10%, var(--glow-1), transparent 60%),
+      radial-gradient(700px 600px at -5% 110%, var(--glow-2), transparent 55%),
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size:auto,auto,42px 42px,42px 42px;
+  }
+  .wrap{max-width:980px;margin:0 auto;padding:34px 22px 90px}
+  a{color:var(--accent-2);text-decoration:none}
+  a:hover{text-decoration:underline}
+
+  /* header */
+  .top{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:26px}
+  .brand{display:flex;align-items:center;gap:14px}
+  .glyph{width:46px;height:46px;border:1px solid var(--line);border-radius:11px;display:grid;place-items:center;
+    font-family:var(--mono);font-weight:700;font-size:19px;color:var(--accent);background:var(--panel);
+    box-shadow:inset 0 0 22px rgba(240,81,56,.12)}
+  h1{font-family:var(--mono);font-size:21px;font-weight:600;letter-spacing:-.3px}
+  .sub{font-family:var(--mono);font-size:11px;color:var(--ink-faint);letter-spacing:1.5px;text-transform:uppercase;margin-top:3px}
+  .pill{font-family:var(--mono);font-size:11px;color:var(--ink-dim);border:1px solid var(--line);
+    border-radius:999px;padding:7px 13px;background:var(--panel)}
+  .headtools{display:flex;align-items:center;gap:10px}
+  .themebtn{font-family:var(--mono);font-size:11px;color:var(--ink-dim);border:1px solid var(--line);
+    border-radius:999px;padding:7px 12px;background:var(--panel);cursor:pointer;display:inline-flex;
+    align-items:center;gap:7px;transition:.15s;letter-spacing:.3px}
+  .themebtn:hover{border-color:var(--accent);color:var(--ink)}
+
+  .note{border:1px solid var(--line);border-left:2px solid var(--accent);background:var(--panel);
+    border-radius:10px;padding:15px 17px;font-size:13.5px;color:var(--ink-dim);line-height:1.6;margin-bottom:28px}
+  .note b{color:var(--ink)}
+  .note code{font-family:var(--mono);font-size:12px;color:var(--accent-2);background:rgba(255,122,92,.08);padding:1px 5px;border-radius:4px}
+
+  /* mode select */
+  .label{font-family:var(--mono);font-size:11px;letter-spacing:1.6px;text-transform:uppercase;color:var(--ink-faint);margin:0 0 12px}
+  .modes{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px}
+  @media(max-width:720px){.modes{grid-template-columns:1fr}}
+  .mode{cursor:pointer;border:1px solid var(--line);background:var(--panel);border-radius:13px;padding:18px 17px;
+    transition:.18s ease;position:relative;overflow:hidden}
+  .mode:hover{border-color:#3a4255;background:var(--panel-2);transform:translateY(-2px)}
+  .mode h3{font-family:var(--mono);font-size:15px;font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:9px}
+  .mode .dot{width:8px;height:8px;border-radius:50%;flex:none}
+  .mode p{font-size:12.5px;color:var(--ink-dim);line-height:1.55}
+  .mode .meta{font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);margin-top:11px;letter-spacing:.5px}
+
+  /* topic drill grid */
+  .topicgrid{display:none;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-bottom:24px}
+  .topicgrid.show{display:grid}
+  .tbtn{cursor:pointer;text-align:left;border:1px solid var(--line);background:var(--panel);border-radius:10px;
+    padding:12px 13px;transition:.15s;color:var(--ink)}
+  .tbtn:hover{border-color:var(--accent);background:var(--panel-2)}
+  .tbtn .tn{font-size:13px;font-weight:600}
+  .tbtn .tc{font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);margin-top:4px}
+  .tag{font-family:var(--mono);font-size:9px;letter-spacing:.5px;padding:2px 6px;border-radius:4px;text-transform:uppercase;font-weight:600}
+  .tag.legacy{color:#ffb38a;background:rgba(240,81,56,.14)}
+  .tag.interop{color:#ffd27a;background:rgba(231,181,60,.14)}
+  .tag.modern{color:#8fe3bb;background:rgba(62,201,138,.12)}
+
+  /* opts row */
+  .opts{display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin-bottom:30px;font-size:13px;color:var(--ink-dim)}
+  .switch{display:inline-flex;align-items:center;gap:8px;cursor:pointer;user-select:none}
+  .track{width:38px;height:21px;border-radius:999px;background:var(--panel-2);border:1px solid var(--line);position:relative;transition:.18s}
+  .track::after{content:"";position:absolute;top:2px;left:2px;width:15px;height:15px;border-radius:50%;background:var(--ink-faint);transition:.18s}
+  .switch.on .track{background:rgba(240,81,56,.3);border-color:var(--accent)}
+  .switch.on .track::after{transform:translateX(17px);background:var(--accent)}
+
+  /* quiz */
+  #quiz{display:none}
+  .qbar{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:18px;flex-wrap:wrap}
+  .qprog{font-family:var(--mono);font-size:12px;color:var(--ink-dim);letter-spacing:.5px}
+  .qprog b{color:var(--accent)}
+  .timer{font-family:var(--mono);font-size:13px;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 11px;background:var(--panel)}
+  .timer.low{color:var(--bad);border-color:rgba(239,90,111,.4)}
+  .progbar{height:4px;background:var(--panel-2);border-radius:99px;overflow:hidden;margin-bottom:22px;border:1px solid var(--line)}
+  .progfill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-2));width:0;transition:.3s}
+
+  .card{border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:24px;animation:rise .35s ease}
+  @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  .qmeta{display:flex;gap:9px;align-items:center;margin-bottom:13px;flex-wrap:wrap}
+  .qtopic{font-family:var(--mono);font-size:11px;color:var(--ink-faint);letter-spacing:.6px}
+  .qtext{font-size:17px;line-height:1.5;font-weight:500;margin-bottom:6px}
+  pre.code{font-family:var(--mono);font-size:12.5px;line-height:1.55;background:var(--code-bg);border:1px solid var(--line);
+    border-radius:9px;padding:14px 15px;margin:14px 0 4px;overflow-x:auto;color:var(--code-ink)}
+  pre.code .k{color:#ff7a5c}.pre .t{color:#8fe3bb}
+  .answers{margin-top:18px;display:flex;flex-direction:column;gap:10px}
+  .ans{text-align:left;cursor:pointer;border:1px solid var(--line);background:var(--panel-2);border-radius:10px;
+    padding:13px 15px;font-size:14px;line-height:1.45;color:var(--ink);transition:.13s;display:flex;gap:12px;align-items:flex-start}
+  .ans:hover:not([disabled]){border-color:#48506a}
+  .ans .key{font-family:var(--mono);font-size:12px;color:var(--ink-faint);flex:none;width:16px;font-weight:600}
+  .ans.correct{border-color:var(--ok);background:rgba(62,201,138,.1)}
+  .ans.correct .key{color:var(--ok)}
+  .ans.wrong{border-color:var(--bad);background:rgba(239,90,111,.1)}
+  .ans.wrong .key{color:var(--bad)}
+  .ans[disabled]{cursor:default}
+  .explain{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;font-size:13.5px;line-height:1.62;color:var(--ink-dim);display:none}
+  .explain.show{display:block;animation:rise .3s ease}
+  .explain .verdict{font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.5px;margin-bottom:8px;text-transform:uppercase}
+  .explain .verdict.ok{color:var(--ok)}.explain .verdict.bad{color:var(--bad)}
+  .explain b{color:var(--ink)}
+  .explain code{font-family:var(--mono);font-size:12px;color:var(--accent-2);background:rgba(255,122,92,.08);padding:1px 5px;border-radius:4px}
+  .doclink{display:inline-flex;align-items:center;gap:7px;margin-top:13px;font-family:var(--mono);font-size:11.5px}
+  .doclink::before{content:"↗";color:var(--accent)}
+  .docprompt{margin-top:16px;display:flex;flex-direction:column;gap:9px;font-size:13px;color:var(--ink)}
+  .docbtn{display:inline-flex;align-items:center;gap:8px;align-self:flex-start;font-family:var(--mono);font-size:12px;
+    font-weight:600;color:#180a07;background:var(--accent);border:1px solid var(--accent);border-radius:9px;
+    padding:9px 15px;text-decoration:none;transition:.15s;letter-spacing:.2px}
+  .docbtn:hover{background:var(--accent-2);border-color:var(--accent-2);text-decoration:none}
+  .docbtn::after{content:"↗"}
+
+  .qfoot{display:flex;justify-content:space-between;margin-top:22px;gap:12px}
+  .btn{font-family:var(--mono);font-size:13px;font-weight:600;border:1px solid var(--line);background:var(--panel-2);
+    color:var(--ink);padding:11px 20px;border-radius:9px;cursor:pointer;transition:.15s;letter-spacing:.3px}
+  .btn:hover{border-color:#48506a}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#180a07}
+  .btn.primary:hover{background:var(--accent-2);border-color:var(--accent-2)}
+  .btn.ghost{background:transparent}
+  .btn:disabled{opacity:.35;cursor:default}
+
+  /* results */
+  #results{display:none}
+  .scorehero{border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:26px;text-align:center;margin-bottom:18px}
+  .bignum{font-family:var(--mono);font-size:58px;font-weight:700;line-height:1}
+  .scoreband{font-family:var(--mono);font-size:12px;letter-spacing:1.5px;text-transform:uppercase;margin-top:8px}
+  .scoremsg{font-size:13.5px;color:var(--ink-dim);margin-top:12px;max-width:560px;margin-left:auto;margin-right:auto;line-height:1.6}
+  .profile{border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:22px;margin-bottom:18px}
+  .profile h3{font-family:var(--mono);font-size:13px;letter-spacing:1px;text-transform:uppercase;color:var(--ink-faint);margin-bottom:18px}
+  .scaleheads{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;font-family:var(--mono);font-size:10px;
+    letter-spacing:.5px;text-transform:uppercase;color:var(--ink-faint);padding-bottom:8px;border-bottom:1px solid var(--line);margin-bottom:6px}
+  .scaleheads span:nth-child(2){color:var(--bad)}.scaleheads span:nth-child(3){color:var(--warn)}.scaleheads span:nth-child(4){color:var(--ok)}
+  .prow{display:grid;grid-template-columns:1.6fr 3fr;gap:14px;align-items:center;padding:7px 0}
+  .pname{font-size:12.5px;color:var(--ink)}
+  .pname .mini{font-family:var(--mono);font-size:10px;color:var(--ink-faint)}
+  .pbar{height:18px;border-radius:5px;background:var(--panel-2);position:relative;overflow:hidden;border:1px solid var(--line)}
+  .pbar i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;display:block}
+  .pbar .seg{position:absolute;top:0;bottom:0;width:1px;background:var(--line)}
+  .focus{border:1px solid var(--line);border-left:2px solid var(--warn);background:var(--panel);border-radius:11px;padding:18px 20px;margin-bottom:22px}
+  .focus h3{font-family:var(--mono);font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--warn);margin-bottom:11px}
+  .focus li{font-size:13.5px;color:var(--ink-dim);line-height:1.7;margin-left:18px}
+  .focus li b{color:var(--ink)}
+  .center{text-align:center}
+  .foot{margin-top:40px;text-align:center;font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);line-height:1.7}
+</style>
+<script>
+  /* apply saved theme before first paint to avoid a flash */
+  (function(){
+    try{
+      var saved = localStorage.getItem('ikm-theme');
+      if(saved==='light') document.documentElement.setAttribute('data-theme','light');
+    }catch(e){}
+  })();
+</script>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <div class="brand">
+      <div class="glyph">{ }</div>
+      <div>
+        <h1>IKM iOS Prep Console</h1>
+        <div class="sub">Apple iOS Application Programming · Objective-C + Swift</div>
+      </div>
+    </div>
+    <div class="headtools">
+      <button class="themebtn" id="themeToggle" onclick="toggleTheme()" aria-label="Toggle colour theme">
+        <span id="themeIcon">☾</span><span id="themeLabel">Dark</span>
+      </button>
+      <div class="pill" id="bankcount">— questions loaded</div>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>What this trains.</b> Original questions modelled on the published IKM sub-skill taxonomy (not the proprietary item bank). The drill <b>deliberately overweights legacy and interop topics</b>, because an IKM iOS assessment still probes them heavily and they are where many candidates lose points: manual memory management, Obj-C messaging, Interface Builder wiring, Core Animation/Quartz, and <code>Swift ↔ Objective-C</code> bridging. The full mock mirrors the real format: <b>51 questions, 61 minutes</b>. Results map to the same weak / proficient / strong profile the real report gives you.
+  </div>
+
+  <div id="menu">
+    <p class="label">Choose a mode</p>
+    <div class="modes">
+      <div class="mode" onclick="startMode('mock')">
+        <h3><span class="dot" style="background:var(--accent)"></span>Full mock</h3>
+        <p>51 weighted questions across all sub-skills, timed at 61 minutes. Feedback at the end.</p>
+        <div class="meta">EXAM MODE · TIMED</div>
+      </div>
+      <div class="mode" onclick="startMode('weak')">
+        <h3><span class="dot" style="background:var(--warn)"></span>Weak-area focus</h3>
+        <p>Legacy + interop only. The lower-frequency topics that most commonly drag an iOS candidate's score down.</p>
+        <div class="meta">STUDY MODE · UNTIMED</div>
+      </div>
+      <div class="mode" onclick="toggleTopics()">
+        <h3><span class="dot" style="background:var(--ok)"></span>Topic drill</h3>
+        <p>Pick one sub-skill and grind it with instant explanations and doc links.</p>
+        <div class="meta">STUDY MODE · PICK TOPIC</div>
+      </div>
+    </div>
+
+    <div class="topicgrid" id="topicgrid"></div>
+
+    <div class="opts">
+      <div class="switch on" id="studyToggle" onclick="toggleStudy()">
+        <span class="track"></span><span>Instant feedback (study mode)</span>
+      </div>
+      <div class="switch on" id="shuffleToggle" onclick="toggleShuffle()">
+        <span class="track"></span><span>Shuffle answers</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- QUIZ -->
+  <div id="quiz">
+    <div class="qbar">
+      <div class="qprog">Q<b id="qnum">1</b> / <span id="qtotal">51</span> · <span id="qmodelabel">Full mock</span></div>
+      <div class="timer" id="timer" style="display:none">61:00</div>
+    </div>
+    <div class="progbar"><div class="progfill" id="progfill"></div></div>
+    <div class="card" id="qcard"></div>
+    <div class="qfoot">
+      <button class="btn ghost" onclick="quitQuiz()">Quit</button>
+      <button class="btn primary" id="nextBtn" onclick="nextQuestion()" disabled>Next →</button>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="results">
+    <div class="scorehero">
+      <div class="bignum" id="finalScore">0</div>
+      <div class="scoreband" id="finalBand">—</div>
+      <div class="scoremsg" id="finalMsg"></div>
+    </div>
+    <div class="focus" id="focusBox"></div>
+    <div class="profile">
+      <h3>Sub-skill profile</h3>
+      <div class="scaleheads"><span>Sub-skill</span><span>Weak</span><span>Proficient</span><span>Strong</span></div>
+      <div id="profileRows"></div>
+    </div>
+    <div class="center">
+      <button class="btn primary" onclick="location.reload()">Restart</button>
+      <a class="btn ghost" id="feedbackResults" style="display:none;margin-left:10px;text-decoration:none" target="_blank" rel="noopener">Suggest a question / give feedback ↗</a>
+    </div>
+  </div>
+
+  <div class="foot">
+    <div id="feedbackBar" style="display:none;margin-bottom:14px"></div>
+    Original practice content · authoritative references: swift.org/documentation · developer.apple.com/documentation<br>
+    Not affiliated with IKM / TeckChek. Built for targeted recall drilling.
+  </div>
+</div>
+
+<script>
+/* ---------- feedback / suggestions ----------
+   Paste your Google Form (or any feedback) URL below to switch on the
+   "Suggest a question / give feedback" links in the footer and results screen.
+   Leave it as-is and the links stay hidden — nothing broken shows publicly. */
+const FEEDBACK_URL = "PASTE_YOUR_GOOGLE_FORM_URL_HERE";
+
+function initFeedback(){
+  if(!FEEDBACK_URL || FEEDBACK_URL.indexOf('PASTE_')===0) return;
+  const bar=document.getElementById('feedbackBar');
+  if(bar){
+    bar.style.display='block';
+    bar.innerHTML=`Got a correction or a question to add? <a href="${FEEDBACK_URL}" target="_blank" rel="noopener">Share feedback ↗</a>`;
+  }
+  const rb=document.getElementById('feedbackResults');
+  if(rb){ rb.href=FEEDBACK_URL; rb.style.display='inline-block'; }
+}
+
+/* ---------- topic registry ---------- */
+const TOPICS = {
+  mm:     {name:"Memory Management",            tag:"legacy",  doc:"https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/MemoryMgmt/Articles/MemoryMgmt.html"},
+  objc:   {name:"Obj-C Classes & Messaging",    tag:"legacy",  doc:"https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/ProgrammingWithObjectiveC/Introduction/Introduction.html"},
+  interop:{name:"Swift ↔ Obj-C Interop",        tag:"interop", doc:"https://www.swift.org/documentation/cxx-interop/"},
+  conc:   {name:"Protocols, Blocks & GCD",      tag:"legacy",  doc:"https://developer.apple.com/documentation/dispatch"},
+  cocoa:  {name:"Cocoa Touch Foundations",      tag:"legacy",  doc:"https://developer.apple.com/documentation/foundation"},
+  vc:     {name:"View Controllers & Gestures",  tag:"legacy",  doc:"https://developer.apple.com/documentation/uikit/uiviewcontroller"},
+  draw:   {name:"UIView, Core Animation, Quartz",tag:"legacy", doc:"https://developer.apple.com/documentation/quartzcore"},
+  ib:     {name:"Interface Builder & AutoLayout",tag:"legacy", doc:"https://developer.apple.com/documentation/uikit/nslayoutconstraint"},
+  table:  {name:"Table & Web Views",            tag:"legacy",  doc:"https://developer.apple.com/documentation/uikit/uitableview"},
+  data:   {name:"Data Persistence",             tag:"modern",  doc:"https://developer.apple.com/documentation/coredata"},
+  notif:  {name:"Local & Remote Notifications", tag:"modern",  doc:"https://developer.apple.com/documentation/usernotifications"},
+  av:     {name:"Audio, Video & Images",        tag:"modern",  doc:"https://developer.apple.com/documentation/avfoundation"},
+  sensor: {name:"Core Location & Core Motion",  tag:"modern",  doc:"https://developer.apple.com/documentation/corelocation"},
+  net:    {name:"Networking & Security",        tag:"modern",  doc:"https://developer.apple.com/documentation/security/keychain_services"},
+  debug:  {name:"Debugging & Instruments",      tag:"modern",  doc:"https://developer.apple.com/documentation/xcode/improving-your-app-s-performance"},
+  ship:   {name:"Xcode & App Store Submission", tag:"modern",  doc:"https://developer.apple.com/documentation/xcode/distributing-your-app-for-beta-testing-and-releases"},
+  swift:  {name:"Swift Fundamentals & Generics",tag:"modern",  doc:"https://www.swift.org/documentation/"},
+};
+
+/* ---------- question bank ---------- */
+/* answer = index of correct option */
+const BANK = [
+  // MEMORY MANAGEMENT
+  {t:"mm",q:"Under manual reference counting, a method whose name begins with alloc, new, copy, or mutableCopy returns an object that…",
+    o:["You own and must balance with release or autorelease","The framework owns; you do nothing","Is already autoreleased at +0","Must be retained before first use"],a:0,
+    e:"The Cocoa <b>create rule</b>: those prefixes return a +1 retained object you own. Factory methods like <code>[NSString stringWithFormat:]</code> return autoreleased (+0) objects you do not own."},
+  {t:"mm",q:"What does draining an autorelease pool do?",
+    o:["Sends release to every object that was autoreleased into it","Frees all heap memory immediately","Calls dealloc synchronously on retained objects","Resets the retain count of all live objects to zero"],a:0,
+    e:"Draining sends a deferred <code>release</code> to each pooled object. It is the mechanism behind +0 returns; nothing is force-deallocated, objects with other owners survive."},
+  {t:"mm",q:"In ARC, which capture safely breaks a retain cycle between a class and a closure stored on it, without risking a crash if the instance is gone?",
+    o:["[weak self]","[unowned self]","__strong self","@autoreleasepool"],a:0,
+    e:"<code>weak</code> becomes nil after deallocation (optional). <code>unowned</code> also breaks the cycle but is a non-optional assumed-alive reference and crashes if accessed after deinit."},
+  {t:"mm",q:"An Obj-C property declared @property (nonatomic, copy) NSString * exists because…",
+    o:["A mutable subclass instance could be passed and later mutated behind your back","copy is required for all object properties under ARC","strong cannot be used with NSString","It avoids a retain cycle"],a:0,
+    e:"<code>copy</code> defends against an <code>NSMutableString</code> being assigned and mutated by the caller afterwards. Standard for value-like object properties (NSString, NSArray, NSDictionary)."},
+
+  // OBJ-C CLASSES & MESSAGING
+  {t:"objc",q:"A category in Objective-C lets you…",
+    o:["Add methods to an existing class without subclassing","Add stored instance variables safely","Guarantee +load ordering across categories","Make existing methods private"],a:0,
+    e:"Categories add methods to any class (even framework ones). They cannot add ivars/stored properties (associated objects fake this), and overriding methods via a category has undefined precedence."},
+  {t:"objc",q:"Sending an Objective-C message to nil…",
+    o:["Is a no-op that returns 0 / nil / zero-filled struct","Crashes with EXC_BAD_ACCESS","Throws NSInvalidArgumentException","Fails to compile"],a:0,
+    e:"Messaging nil is legal and returns a zero value of the return type. This is why much Obj-C code omits nil checks. Distinct from Swift, where calling on nil requires optional handling."},
+  {t:"objc",q:"`[obj respondsToSelector:@selector(foo:)]` is used to…",
+    o:["Check at runtime whether the receiver implements a method before calling it","Force the method to run on a background thread","Declare conformance to a protocol","Swizzle the method implementation"],a:0,
+    e:"Common with optional protocol methods (delegates) where the implementation may be absent. Returns a BOOL. Pairs with <code>performSelector:</code> or a direct guarded call."},
+  {t:"objc",q:"In `@property` accessor semantics, what does the @dynamic directive tell the compiler?",
+    o:["Accessors are provided at runtime, do not synthesize them","Generate atomic accessors","The property is read-only","Use copy semantics"],a:0,
+    e:"<code>@dynamic</code> suppresses auto-synthesis, promising the getter/setter exists at runtime (e.g. Core Data <code>NSManagedObject</code> properties resolved dynamically)."},
+
+  // INTEROP
+  {t:"interop",q:"An Obj-C object pointer property with NO nullability annotation imports into Swift as…",
+    o:["An implicitly unwrapped optional (e.g. String!)","A non-optional (String)","A plain optional (String?)","The Obj-C type unchanged (NSString)"],a:0,
+    e:"Without an audited nullability region, pointers map to IUOs. Annotate with <code>nullable</code> / <code>nonnull</code> (or <code>NS_ASSUME_NONNULL_BEGIN</code>) to get clean <code>String?</code> / <code>String</code> mappings."},
+  {t:"interop",q:"To call a Swift class from Objective-C, the Swift type must…",
+    o:["Be @objc-compatible (NSObject subclass or @objc members) and you import the generated -Swift.h header","Be declared in a bridging header","Be a struct marked @frozen","Conform to Codable"],a:0,
+    e:"Swift→Obj-C uses the auto-generated <code>&lt;Module&gt;-Swift.h</code>. Bridging headers go the other way (Obj-C→Swift). Swift structs/enums and generics are not visible to Obj-C."},
+  {t:"interop",q:"Which Swift type does NOT automatically bridge to an Objective-C type?",
+    o:["A plain Swift struct with no @objc","String (↔ NSString)","Array (↔ NSArray)","Int (↔ NSNumber)"],a:0,
+    e:"Structs, enums (non-@objc), tuples, and generics have no Obj-C representation. Foundation value types bridge automatically; to expose a struct you wrap it in an @objc class."},
+  {t:"interop",q:"An Obj-C method `- (void)load:(void(^)(NSError *))completion;` imports into Swift as a closure parameter typed…",
+    o:["((Error?) -> Void)!","(Error?) -> Void","(NSError) -> Void","@escaping (Error) async -> Void"],a:0,
+    e:"Blocks bridge to Swift closures; an un-audited <code>NSError *</code> becomes <code>Error?</code>, and the un-annotated block pointer itself is an IUO. Closures crossing the boundary are escaping by default."},
+
+  // PROTOCOLS / BLOCKS / GCD
+  {t:"conc",q:"Calling DispatchQueue.main.sync { } from code already running on the main thread…",
+    o:["Deadlocks","Runs the block immediately and returns","Schedules it for the next runloop","Throws a fatalError caught by the runtime"],a:0,
+    e:"<code>sync</code> blocks the current thread until the target queue runs the work, but the main (serial) queue is busy waiting, so it can never run it. Use <code>async</code> or check you are off-main first."},
+  {t:"conc",q:"A block in Objective-C that needs to mutate a captured local variable requires…",
+    o:["The variable marked __block","The variable marked __weak","Copying the block to the heap","An @synchronized region"],a:0,
+    e:"Captures are const copies by default. <code>__block</code> gives the block read/write access to the variable's storage. Swift closures capture mutable locals by reference without an annotation."},
+  {t:"conc",q:"An @optional protocol method in Objective-C means the conforming class…",
+    o:["May omit the implementation; callers must check respondsToSelector:","Must implement it or fail to compile","Inherits a default empty implementation","Can only be a category"],a:0,
+    e:"Obj-C optional protocol requirements are not compiler-enforced; you guard the call with <code>respondsToSelector:</code>. Swift's pure protocols are all-required unless marked <code>@objc optional</code>."},
+  {t:"conc",q:"To run independent units of work concurrently and be notified when ALL finish, you use…",
+    o:["A DispatchGroup with enter/leave and notify","A serial DispatchQueue","DispatchQueue.main.async repeatedly","NSLock around each task"],a:0,
+    e:"<code>DispatchGroup</code> tracks outstanding work via enter/leave (or group-dispatched blocks) and fires <code>notify</code> when the count hits zero. The modern alternative is a structured-concurrency <code>TaskGroup</code>."},
+
+  // COCOA TOUCH FOUNDATIONS
+  {t:"cocoa",q:"By default, NSNotificationCenter delivers a posted notification…",
+    o:["Synchronously, on the thread that posted it","Asynchronously on the main thread","On a private serial queue","Only after the runloop idles"],a:0,
+    e:"Posting is synchronous: observers run on the posting thread before <code>post</code> returns. UI work in an observer triggered off-main must be dispatched to main yourself."},
+  {t:"cocoa",q:"Key-Value Observing (KVO) fires change notifications only when the property is changed…",
+    o:["Through KVC-compliant accessors (or will/didChangeValueForKey:)","By direct ivar assignment","Inside a @synchronized block","After the object is added to an array"],a:0,
+    e:"KVO swizzles the setter; bypassing it (direct ivar writes) skips notifications. Manual notification needs <code>willChangeValueForKey:</code> / <code>didChangeValueForKey:</code>."},
+  {t:"cocoa",q:"NSArray vs NSMutableArray: which statement is correct?",
+    o:["NSMutableArray is a subclass of NSArray adding mutation methods","NSArray is mutable if created with arrayWithCapacity:","They are unrelated classes bridged at runtime","NSArray copies on every access"],a:0,
+    e:"Classic class-cluster hierarchy. A property typed <code>NSArray *</code> with <code>copy</code> guards against being handed a mutable instance that the caller keeps mutating."},
+
+  // VIEW CONTROLLERS & GESTURES
+  {t:"vc",q:"On a view controller's first appearance, the lifecycle order is…",
+    o:["viewDidLoad → viewWillAppear → viewDidAppear","viewWillAppear → viewDidLoad → viewDidAppear","loadView → viewDidAppear → viewDidLoad","viewDidLoad → viewDidAppear → viewWillAppear"],a:0,
+    e:"<code>viewDidLoad</code> runs once when the view is created; <code>viewWillAppear</code>/<code>viewDidAppear</code> run on every appearance. Put one-time setup in didLoad, refresh logic in willAppear."},
+  {t:"vc",q:"A discrete gesture recognizer (e.g. UITapGestureRecognizer) reports its state as…",
+    o:[".possible then .recognized (alias .ended)",".began → .changed → .ended",".began then .cancelled",".changed repeatedly until .failed"],a:0,
+    e:"Discrete recognizers jump straight to <code>.recognized</code>. Continuous ones (pan, pinch) go <code>.began → .changed → .ended</code>. Read <code>state</code> in the action to handle each phase."},
+  {t:"vc",q:"To let a custom view's pan recognizer and a scroll view's recognizer fire at the same time, you…",
+    o:["Return true from gestureRecognizer(_:shouldRecognizeSimultaneouslyWith:)","Set cancelsTouchesInView = false","Lower the view's tag","Override hitTest to return nil"],a:0,
+    e:"By default recognizers are mutually exclusive once one begins. The simultaneous-recognition delegate method opts into concurrent recognition for the specified pair."},
+
+  // UIVIEW / CORE ANIMATION / QUARTZ
+  {t:"draw",q:"Implicit (automatic) animations occur when you set an animatable CALayer property on…",
+    o:["A standalone layer not backing a UIView","Any layer, always","Only inside UIView.animate blocks","Only on the main layer of a window"],a:0,
+    e:"UIView-backed layers disable implicit animations outside an animation block. Free-standing layers animate property changes implicitly via the default <code>CATransaction</code>."},
+  {t:"draw",q:"Inside `draw(_:)` you obtain the drawing context with…",
+    o:["UIGraphicsGetCurrentContext()","CGContextCreate()","layer.context","view.graphicsContext"],a:0,
+    e:"UIKit pushes a valid <code>CGContext</code> before calling <code>draw(_:)</code>; fetch it with <code>UIGraphicsGetCurrentContext()</code>. Creating your own context there is wrong and wasteful."},
+  {t:"draw",q:"A CALayer's contentsScale property should match the screen scale because…",
+    o:["It maps layer points to physical pixels, keeping rendering sharp on Retina","It controls animation duration","It sets the z-position","It enables rasterization caching"],a:0,
+    e:"Set <code>layer.contentsScale = UIScreen.main.scale</code> (or the trait's scale) for custom-drawn or text layers, otherwise content renders blurry at 1x on 2x/3x displays."},
+
+  // INTERFACE BUILDER / AUTOLAYOUT
+  {t:"ib",q:"An IBOutlet to a subview inside a view controller is conventionally declared…",
+    o:["weak, because the view hierarchy already retains it","strong, to keep it alive","unowned, to avoid optionals","copy, to snapshot it"],a:0,
+    e:"The loaded view retains its subviews, so <code>weak</code> avoids redundant ownership. (Top-level nib objects historically needed strong; modern storyboards make subview outlets weak by default.)"},
+  {t:"ib",q:"Adding NSLayoutConstraints programmatically to a view that still has translatesAutoresizingMaskIntoConstraints = true causes…",
+    o:["Conflicting / unsatisfiable constraints at runtime","A compile error","The constraints to be silently ignored","Automatic constraint priority lowering"],a:0,
+    e:"The autoresizing mask is converted into its own constraints that clash with yours. Set the flag to <code>false</code> on any view you constrain manually."},
+  {t:"ib",q:"Content hugging priority controls a view's resistance to…",
+    o:["Growing larger than its intrinsic content size","Shrinking below its intrinsic size","Moving off-screen","Being removed from the hierarchy"],a:0,
+    e:"Hugging = resist getting bigger. <b>Compression resistance</b> = resist getting smaller. Raise hugging on a label you want to stay tight when its sibling should stretch."},
+
+  // TABLE & WEB VIEWS
+  {t:"table",q:"dequeueReusableCell(withIdentifier:for:) differs from the version without the indexPath in that it…",
+    o:["Always returns a non-nil cell and requires the identifier to be registered","Can return nil if no cell is available","Skips cell reuse entirely","Runs on a background queue"],a:0,
+    e:"The <code>for:</code> variant guarantees a cell (creating one if needed) and traps if the identifier was never registered. The legacy variant may return nil, requiring a manual alloc fallback."},
+  {t:"table",q:"Janky scrolling when cells show downloaded images is most directly fixed by…",
+    o:["Decoding/resizing images off the main thread, then assigning on main, and cancelling on reuse","Increasing the cell height","Using more reuse identifiers","Disabling clipsToBounds"],a:0,
+    e:"Image decode is CPU-heavy and blocks the main thread per frame. Do it in the background, hop to main to set, and cancel stale loads in <code>prepareForReuse</code> to avoid wrong-image flashes."},
+
+  // DATA PERSISTENCE
+  {t:"data",q:"UserDefaults is the right store for…",
+    o:["Small preference values like flags and last-selected tab","Auth tokens and passwords","Large binary blobs and images","Relational object graphs"],a:0,
+    e:"Defaults are unencrypted plist-backed key/values. Secrets belong in the Keychain; large/structured data in files or Core Data/SQLite."},
+  {t:"data",q:"An NSManagedObjectContext is…",
+    o:["Not thread-safe; confine access to its queue via perform/performAndWait","Fully thread-safe and lock-free","Shared safely across threads if read-only","Automatically synchronized by the coordinator"],a:0,
+    e:"Each context owns a queue (main or private). Touching managed objects off their context's queue is a data race. Use <code>perform</code>/<code>performAndWait</code> and pass <code>objectID</code>s between contexts."},
+  {t:"data",q:"In the Core Data stack, the persistent store coordinator sits…",
+    o:["Between managed object contexts and the persistent store(s)","Above the contexts as a UI layer","Inside each managed object","Between the model and the schema migration"],a:0,
+    e:"Contexts talk to the coordinator, which talks to the store (typically SQLite). <code>NSPersistentContainer</code> wires the model, coordinator, store, and a main-queue view context together."},
+
+  // NOTIFICATIONS
+  {t:"notif",q:"Receiving remote push notifications requires the app to…",
+    o:["Register with APNs and forward the returned device token to your server","Only request UNUserNotificationCenter authorization","Enable Background Fetch alone","Schedule a UNTimeIntervalNotificationTrigger"],a:0,
+    e:"Call <code>registerForRemoteNotifications()</code>, receive the token in the app delegate callback, and send it to your push backend. Authorization for displaying alerts is a separate prompt."},
+  {t:"notif",q:"Before any local notification will display an alert, you must…",
+    o:["Request authorization for the desired options (alert/sound/badge)","Add a background mode","Create an App Group","Register a category identifier"],a:0,
+    e:"<code>UNUserNotificationCenter.current().requestAuthorization(options:)</code> gates alert/sound/badge. Silent provisional auth and time-sensitive interruptions are additional refinements."},
+
+  // AUDIO / VIDEO / IMAGES
+  {t:"av",q:"AVAudioPlayer vs AVPlayer: which is correct?",
+    o:["AVAudioPlayer plays local file audio; AVPlayer handles streaming and video","AVPlayer is audio-only; AVAudioPlayer plays video","Both require AVAudioEngine","AVAudioPlayer streams remote URLs natively"],a:0,
+    e:"<code>AVAudioPlayer</code> is for in-memory/local sound files. <code>AVPlayer</code> + <code>AVPlayerItem</code> handle remote/streamed media and video playback."},
+  {t:"av",q:"The framework that replaced the deprecated AssetsLibrary for accessing the user's photo library is…",
+    o:["Photos (PHPhotoLibrary / PHAsset)","PhotoKit Legacy","UIImagePickerController only","Core Image"],a:0,
+    e:"The <b>Photos</b> framework (PhotoKit) supersedes AssetsLibrary. Access still requires an Info.plist usage string and a permission prompt; <code>PHPickerViewController</code> reads selections without full-library auth."},
+
+  // CORE LOCATION / CORE MOTION
+  {t:"sensor",q:"Requesting the user's location requires, at minimum…",
+    o:["An Info.plist usage-description key plus requestWhenInUse/AlwaysAuthorization","Only enabling the Location background mode","A paid developer account check","CMMotionManager startup"],a:0,
+    e:"Missing the <code>NSLocationWhenInUseUsageDescription</code> key means the prompt never shows and updates silently fail. Authorization level (when-in-use vs always) gates background delivery."},
+  {t:"sensor",q:"Fused, high-rate device attitude (roll/pitch/yaw from gyro + accelerometer) comes from…",
+    o:["CMMotionManager device-motion updates (Core Motion)","CLLocationManager heading","UIAccelerometer (deprecated) raw values","CMAltimeter"],a:0,
+    e:"<code>CMMotionManager.startDeviceMotionUpdates</code> gives sensor-fused attitude. Raw accelerometer/gyro are also available but unfiltered; the old <code>UIAccelerometer</code> API is long deprecated."},
+
+  // NETWORKING / SECURITY
+  {t:"net",q:"App Transport Security, by default, requires outbound connections to…",
+    o:["Use HTTPS with TLS 1.2+; plain HTTP needs an explicit exception","Use a pinned certificate","Run through a VPN","Be limited to GET requests"],a:0,
+    e:"ATS blocks cleartext HTTP unless you add an <code>NSAppTransportSecurity</code> exception (discouraged, often rejected). It also enforces minimum TLS version and cipher strength."},
+  {t:"net",q:"The correct place to persist a user's session/auth token is…",
+    o:["Keychain Services","UserDefaults","A plist in Documents","An in-memory singleton only"],a:0,
+    e:"Keychain entries are encrypted and survive reinstall/iCloud per the chosen accessibility class. Defaults and plain files are unencrypted and inappropriate for secrets."},
+  {t:"net",q:"A URLSession dataTask completion handler, by default, is invoked on…",
+    o:["A background delegate queue, so UI updates must be dispatched to main","The main thread always","The thread that created the task","A serial queue named .main"],a:0,
+    e:"Unless you supply a delegate queue, completion runs off-main. Touching UIKit from there is a violation; hop to <code>DispatchQueue.main</code> (or mark the call site <code>@MainActor</code>)."},
+
+  // DEBUGGING / INSTRUMENTS
+  {t:"debug",q:"To locate a retain cycle that leaks memory at runtime you use…",
+    o:["The Memory Graph Debugger and/or Instruments Leaks & Allocations","The Time Profiler","Address Sanitizer's UI tab","The View Hierarchy Debugger"],a:0,
+    e:"The Memory Graph shows strong-reference loops; Leaks/Allocations track growth and unreleased objects. Time Profiler is for CPU hotspots, not memory."},
+  {t:"debug",q:"The Instruments Time Profiler is used to…",
+    o:["Sample CPU usage and find hot code paths","Detect over-released objects","Measure network latency","Find AutoLayout conflicts"],a:0,
+    e:"It periodically samples the call stack to show where CPU time is spent. For UI hitches, the <b>Hangs</b> / Core Animation instruments are more targeted."},
+
+  // XCODE / SHIP
+  {t:"ship",q:"A build submitted to the App Store must be signed with…",
+    o:["A distribution certificate and an App Store provisioning profile","A development certificate","An ad-hoc profile","No profile if using Xcode Cloud"],a:0,
+    e:"Development certs/profiles are for debugging on registered devices. App Store distribution needs the distribution identity and matching provisioning profile (Xcode's automatic signing handles this when configured)."},
+  {t:"ship",q:"dSYM files are needed to…",
+    o:["Symbolicate crash reports back to readable function names and line numbers","Sign the app bundle","Store provisioning entitlements","Compress app thinning slices"],a:0,
+    e:"Release builds strip symbols; the <code>.dSYM</code> maps stripped addresses back to source. Upload it (or enable Xcode/Crashlytics upload) so crash logs are human-readable."},
+
+  // SWIFT FUNDAMENTALS / GENERICS
+  {t:"swift",q:"The core difference between a Swift struct and a class is…",
+    o:["struct is a value type (copied on assignment); class is a reference type (shared)","struct cannot have methods","class cannot conform to protocols","struct is always stored on the heap"],a:0,
+    e:"Value semantics mean each copy is independent (copy-on-write for std collections). Classes share identity and support inheritance and deinit; reach for them when identity or reference sharing is required."},
+  {t:"swift",q:"guard let differs from if let in that…",
+    o:["guard requires an else that exits the scope, and the binding stays available afterwards","if let binds for the whole function","guard cannot bind multiple optionals","if let exits the function on failure"],a:0,
+    e:"<code>guard let</code> enforces early exit and keeps the unwrapped value in the enclosing scope, reducing nesting. <code>if let</code> scopes the binding to its own block."},
+  {t:"swift",q:"In `func process<T: Equatable>(_ items: [T])`, the `: Equatable` is…",
+    o:["A type constraint requiring T to conform to Equatable","A return type","A default value","An associated type"],a:0,
+    e:"Constraints let the generic body use the conformance's API (here, <code>==</code>). For richer constraints use a <code>where</code> clause, e.g. <code>where T.Element: Hashable</code>."},
+  {t:"swift",q:"A closure stored as a property that captures self strongly will, on a class instance, typically cause…",
+    o:["A retain cycle unless self is captured weakly","A compile error","An immediate crash","Automatic deallocation of self"],a:0,
+    e:"self holds the closure, the closure holds self. Break it with <code>[weak self]</code> (then guard) or <code>[unowned self]</code> when the lifetimes are guaranteed."},
+];
+
+/* ---------- state ---------- */
+let state = {study:true, shuffle:true, mode:null, queue:[], idx:0, answered:false, picked:-1, results:[], timer:null, timeLeft:0};
+
+document.getElementById('bankcount').textContent = BANK.length + ' questions loaded';
+
+/* ---------- theme ---------- */
+function applyThemeLabel(){
+  const light = document.documentElement.getAttribute('data-theme')==='light';
+  document.getElementById('themeIcon').textContent = light ? '☀' : '☾';
+  document.getElementById('themeLabel').textContent = light ? 'Light' : 'Dark';
+}
+function toggleTheme(){
+  const light = document.documentElement.getAttribute('data-theme')==='light';
+  if(light){
+    document.documentElement.removeAttribute('data-theme');
+    try{localStorage.setItem('ikm-theme','dark');}catch(e){}
+  } else {
+    document.documentElement.setAttribute('data-theme','light');
+    try{localStorage.setItem('ikm-theme','light');}catch(e){}
+  }
+  applyThemeLabel();
+}
+applyThemeLabel();
+initFeedback();
+
+/* topic drill grid */
+const grid = document.getElementById('topicgrid');
+Object.entries(TOPICS).forEach(([key,t])=>{
+  const n = BANK.filter(q=>q.t===key).length;
+  if(!n) return;
+  const b=document.createElement('button');
+  b.className='tbtn';
+  b.innerHTML=`<div class="tn">${t.name}</div><div class="tc"><span class="tag ${t.tag}">${t.tag}</span> &nbsp;${n} q</div>`;
+  b.onclick=()=>startTopic(key);
+  grid.appendChild(b);
+});
+
+function toggleTopics(){grid.classList.toggle('show');}
+function toggleStudy(){state.study=!state.study;document.getElementById('studyToggle').classList.toggle('on',state.study);}
+function toggleShuffle(){state.shuffle=!state.shuffle;document.getElementById('shuffleToggle').classList.toggle('on',state.shuffle);}
+
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+function startMode(mode){
+  state.mode=mode;
+  if(mode==='mock'){
+    state.study=false;
+    document.getElementById('studyToggle').classList.remove('on');
+    let pool=shuffle(BANK);
+    // weight the 51 toward legacy+interop: take all legacy/interop, fill rest with modern
+    const heavy=pool.filter(q=>['legacy','interop'].includes(TOPICS[q.t].tag));
+    const light=pool.filter(q=>TOPICS[q.t].tag==='modern');
+    state.queue=shuffle([...heavy, ...light]).slice(0, Math.min(51, BANK.length));
+    document.getElementById('qmodelabel').textContent='Full mock';
+    startTimer(61*60);
+  } else if(mode==='weak'){
+    state.queue=shuffle(BANK.filter(q=>['legacy','interop'].includes(TOPICS[q.t].tag)));
+    document.getElementById('qmodelabel').textContent='Weak-area focus';
+  }
+  launch();
+}
+function startTopic(key){
+  state.mode='topic';
+  state.queue=shuffle(BANK.filter(q=>q.t===key));
+  document.getElementById('qmodelabel').textContent=TOPICS[key].name;
+  launch();
+}
+
+function launch(){
+  state.idx=0;state.results=[];
+  document.getElementById('menu').style.display='none';
+  document.getElementById('results').style.display='none';
+  document.getElementById('quiz').style.display='block';
+  document.getElementById('qtotal').textContent=state.queue.length;
+  renderQuestion();
+}
+
+function startTimer(secs){
+  state.timeLeft=secs;
+  const el=document.getElementById('timer');el.style.display='block';
+  const tick=()=>{
+    const m=Math.floor(state.timeLeft/60), s=state.timeLeft%60;
+    el.textContent=`${m}:${String(s).padStart(2,'0')}`;
+    el.classList.toggle('low',state.timeLeft<=300);
+    if(state.timeLeft<=0){clearInterval(state.timer);finish();}
+    state.timeLeft--;
+  };
+  tick();state.timer=setInterval(tick,1000);
+}
+
+function renderQuestion(){
+  const q=state.queue[state.idx];
+  state.answered=false;state.picked=-1;
+  document.getElementById('qnum').textContent=state.idx+1;
+  document.getElementById('progfill').style.width=((state.idx)/state.queue.length*100)+'%';
+  document.getElementById('nextBtn').disabled=true;
+
+  const opts=state.shuffle
+    ? shuffle(q.o.map((text,i)=>({text,i})))
+    : q.o.map((text,i)=>({text,i}));
+  const letters=['A','B','C','D','E'];
+  const t=TOPICS[q.t];
+
+  let html=`<div class="qmeta"><span class="tag ${t.tag}">${t.tag}</span><span class="qtopic">${t.name}</span></div>`;
+  html+=`<div class="qtext">${q.q}</div>`;
+  if(q.code) html+=`<pre class="code">${q.code}</pre>`;
+  html+=`<div class="answers">`;
+  opts.forEach((opt,j)=>{
+    html+=`<button class="ans" data-orig="${opt.i}" data-pos="${j}" onclick="pick(this)"><span class="key">${letters[j]}</span><span>${opt.text}</span></button>`;
+  });
+  html+=`</div>`;
+  html+=`<div class="explain" id="explain"></div>`;
+  document.getElementById('qcard').innerHTML=html;
+}
+
+function pick(btn){
+  if(state.answered && state.study) return;
+  if(state.answered) return;
+  const q=state.queue[state.idx];
+  const orig=parseInt(btn.dataset.orig);
+  state.picked=orig;
+  const correct = orig===q.a;
+  state.results.push({t:q.t, correct});
+  state.answered=true;
+  document.getElementById('nextBtn').disabled=false;
+
+  if(state.study){
+    const btns=document.querySelectorAll('.ans');
+    btns.forEach(b=>{
+      b.setAttribute('disabled','');
+      const bo=parseInt(b.dataset.orig);
+      if(bo===q.a) b.classList.add('correct');
+      else if(bo===orig) b.classList.add('wrong');
+    });
+    const ex=document.getElementById('explain');
+    const t=TOPICS[q.t];
+    const docCta = correct
+      ? `<br><a class="doclink" href="${t.doc}" target="_blank" rel="noopener">${t.name} reference</a>`
+      : `<div class="docprompt">Read the official documentation to lock this in:<a class="docbtn" href="${t.doc}" target="_blank" rel="noopener">${t.name} · official documentation</a></div>`;
+    ex.innerHTML=`<div class="verdict ${correct?'ok':'bad'}">${correct?'✓ Correct':'✗ Incorrect'}</div>${q.e}${docCta}`;
+    ex.classList.add('show');
+  } else {
+    // exam mode: just mark selection subtly
+    btns_mark(btn);
+  }
+  if(state.idx===state.queue.length-1) document.getElementById('nextBtn').textContent='Finish ▸';
+}
+function btns_mark(btn){
+  document.querySelectorAll('.ans').forEach(b=>b.style.opacity='.55');
+  btn.style.opacity='1';btn.style.borderColor='var(--accent)';
+}
+
+function nextQuestion(){
+  if(state.idx>=state.queue.length-1){finish();return;}
+  state.idx++;renderQuestion();
+  document.getElementById('nextBtn').textContent='Next →';
+}
+
+function quitQuiz(){if(state.timer)clearInterval(state.timer);location.reload();}
+
+function finish(){
+  if(state.timer)clearInterval(state.timer);
+  document.getElementById('quiz').style.display='none';
+  document.getElementById('results').style.display='block';
+
+  const total=state.results.length||1;
+  const correct=state.results.filter(r=>r.correct).length;
+  const score=Math.round(correct/total*100);
+  document.getElementById('finalScore').textContent=score;
+
+  const band=document.getElementById('finalBand');
+  const msg=document.getElementById('finalMsg');
+  if(score<60){band.textContent='WEAK · 1–59';band.style.color='var(--bad)';
+    msg.textContent='Below the IKM proficiency threshold. Focus on the weak sub-skills below — especially the legacy and interop rows — until those answers are automatic.';}
+  else if(score<80){band.textContent='PROFICIENT · 60–79';band.style.color='var(--warn)';
+    msg.textContent='Solid proficient band — the level an IKM iOS assessment expects of a working engineer. To push into the strong band, the remaining gap is usually breadth on the amber/red rows below, not the modern Swift rows.';}
+  else{band.textContent='STRONG · 80–100';band.style.color='var(--ok)';
+    msg.textContent='Strong — comfortably above what an IKM iOS assessment requires. Periodic weak-area runs keep the legacy and interop topics sharp.';}
+
+  // per-topic profile
+  const perTopic={};
+  state.results.forEach(r=>{(perTopic[r.t]=perTopic[r.t]||{c:0,n:0}); perTopic[r.t].n++; if(r.correct)perTopic[r.t].c++;});
+  const rows=document.getElementById('profileRows');rows.innerHTML='';
+  const focusItems=[];
+  Object.entries(perTopic).sort((a,b)=>(a[1].c/a[1].n)-(b[1].c/b[1].n)).forEach(([key,d])=>{
+    const pct=Math.round(d.c/d.n*100);
+    const t=TOPICS[key];
+    const col = pct<60?'var(--bad)':pct<80?'var(--warn)':'var(--ok)';
+    const missed = d.c < d.n;
+    const nameHtml = missed
+      ? `<a href="${t.doc}" target="_blank" rel="noopener" title="Open the official documentation for ${t.name}">${t.name} ↗</a>`
+      : t.name;
+    const row=document.createElement('div');row.className='prow';
+    row.innerHTML=`<div class="pname">${nameHtml}<div class="mini">${d.c}/${d.n} · <span class="tag ${t.tag}" style="font-size:8px">${t.tag}</span></div></div>
+      <div class="pbar"><span class="seg" style="left:60%"></span><span class="seg" style="left:80%"></span><i style="width:${pct}%;background:${col}"></i></div>`;
+    rows.appendChild(row);
+    if(pct<80 && ['legacy','interop'].includes(t.tag)) focusItems.push(`<b>${t.name}</b> (${pct}%) → <a href="${t.doc}" target="_blank" rel="noopener">official documentation ↗</a>`);
+  });
+
+  const fb=document.getElementById('focusBox');
+  if(focusItems.length){
+    fb.innerHTML=`<h3>Drill these next (legacy + interop, below strong)</h3><ul>`+
+      focusItems.slice(0,6).map(f=>`<li>${f}</li>`).join('')+`</ul>`;
+  } else {
+    fb.innerHTML=`<h3>No legacy/interop gaps in this run</h3><ul><li>Run a <b>Full mock</b> to confirm breadth under the 61-minute clock.</li></ul>`;
+  }
+}
+</script>
+</body>
+</html>
