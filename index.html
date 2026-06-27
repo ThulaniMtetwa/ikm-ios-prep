@@ -86,8 +86,10 @@
 
   /* mode select */
   .label{font-family:var(--mono);font-size:11px;letter-spacing:1.6px;text-transform:uppercase;color:var(--ink-faint);margin:0 0 12px}
-  .modes{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px}
-  @media(max-width:720px){.modes{grid-template-columns:1fr}}
+  .modes{display:grid;grid-template-columns:repeat(auto-fit,minmax(205px,1fr));gap:14px;margin-bottom:24px}
+  @media(max-width:560px){.modes{grid-template-columns:1fr}}
+  .mode.disabled{opacity:.42;pointer-events:none}
+  .modecount{font-family:var(--mono);font-size:12px;color:var(--bad);font-weight:700;margin-left:auto}
   .mode{cursor:pointer;border:1px solid var(--line);background:var(--panel);border-radius:13px;padding:18px 17px;
     transition:.18s ease;position:relative;overflow:hidden}
   .mode:hover{border-color:#3a4255;background:var(--panel-2);transform:translateY(-2px)}
@@ -192,6 +194,27 @@
   .focus li b{color:var(--ink)}
   .center{text-align:center}
   .foot{margin-top:40px;text-align:center;font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);line-height:1.7}
+
+  /* progress dashboard */
+  .dash{border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:18px 20px;margin-bottom:26px}
+  .dashhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;gap:12px}
+  .dashhead h3{font-family:var(--mono);font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--ink-faint)}
+  .dashreset{font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);background:transparent;border:1px solid var(--line);
+    border-radius:7px;padding:5px 10px;cursor:pointer;transition:.15s}
+  .dashreset:hover{border-color:var(--bad);color:var(--bad)}
+  .dashstats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+  .stat{border:1px solid var(--line);background:var(--panel-2);border-radius:10px;padding:13px 14px;text-align:center}
+  .statnum{font-family:var(--mono);font-size:25px;font-weight:700;color:var(--ink);line-height:1}
+  .statnum span{font-size:14px;color:var(--ink-dim)}
+  .statlab{font-family:var(--mono);font-size:9.5px;letter-spacing:.5px;text-transform:uppercase;color:var(--ink-faint);margin-top:6px}
+  .dashbars{display:flex;flex-direction:column;gap:6px}
+  .dashbars .subhead{font-family:var(--mono);font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:var(--ink-faint);margin:4px 0 2px}
+  .drow{display:grid;grid-template-columns:1.5fr 3fr 36px;gap:10px;align-items:center}
+  .dname{font-size:11.5px;color:var(--ink-dim);display:flex;align-items:center;gap:6px}
+  .dbar{height:10px;border-radius:4px;background:var(--panel-2);border:1px solid var(--line);overflow:hidden}
+  .dbar i{display:block;height:100%;border-radius:3px}
+  .dpct{font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);text-align:right}
+  @media(max-width:520px){.dashstats{grid-template-columns:1fr}}
 </style>
 <script>
   /* apply saved theme before first paint to avoid a flash */
@@ -227,6 +250,16 @@
   </div>
 
   <div id="menu">
+
+    <div class="dash" id="dashboard" style="display:none">
+      <div class="dashhead">
+        <h3>Your progress · saved on this device</h3>
+        <button class="dashreset" onclick="resetProgress()">Reset progress</button>
+      </div>
+      <div class="dashstats" id="dashStats"></div>
+      <div class="dashbars" id="dashBars"></div>
+    </div>
+
     <p class="label">Choose a mode</p>
     <div class="modes">
       <div class="mode" onclick="startMode('mock')">
@@ -238,6 +271,11 @@
         <h3><span class="dot" style="background:var(--warn)"></span>Weak-area focus</h3>
         <p>Legacy + interop only. The lower-frequency topics that most commonly drag an iOS candidate's score down.</p>
         <div class="meta">STUDY MODE · UNTIMED</div>
+      </div>
+      <div class="mode" id="reviewMode" onclick="startMode('review')">
+        <h3><span class="dot" style="background:var(--bad)"></span>Review mistakes<span class="modecount" id="reviewCount"></span></h3>
+        <p>Re-drill only the questions you've previously gotten wrong, with instant explanations. The list shrinks as you master them.</p>
+        <div class="meta">STUDY MODE · ADAPTIVE</div>
       </div>
       <div class="mode" onclick="toggleTopics()">
         <h3><span class="dot" style="background:var(--ok)"></span>Topic drill</h3>
@@ -254,6 +292,9 @@
       </div>
       <div class="switch on" id="shuffleToggle" onclick="toggleShuffle()">
         <span class="track"></span><span>Shuffle answers</span>
+      </div>
+      <div class="switch on" id="adaptiveToggle" onclick="toggleAdaptive()">
+        <span class="track"></span><span>Adaptive order (focus weak)</span>
       </div>
     </div>
   </div>
@@ -526,9 +567,114 @@ const BANK = [
 ];
 
 /* ---------- state ---------- */
-let state = {study:true, shuffle:true, mode:null, queue:[], idx:0, answered:false, picked:-1, results:[], timer:null, timeLeft:0};
+let state = {study:true, shuffle:true, adaptive:true, mode:null, queue:[], idx:0, answered:false, picked:-1, results:[], timer:null, timeLeft:0};
 
 document.getElementById('bankcount').textContent = BANK.length + ' questions loaded';
+
+/* ---------- progress persistence (localStorage) ----------
+   Per-question outcomes, mastery, and session history persist across visits.
+   Stable per-question id derived from topic + question text. */
+function hashId(s){let h=0;for(let i=0;i<s.length;i++){h=(h*31+s.charCodeAt(i))|0;}return 'q'+(h>>>0).toString(36);}
+BANK.forEach(q=>{q.id=hashId(q.t+'|'+q.q);});
+
+const PKEY='ikm-progress';
+function loadProgress(){try{const r=JSON.parse(localStorage.getItem(PKEY));if(r&&r.v===1)return r;}catch(e){}return {v:1,q:{},attempts:[]};}
+let progress=loadProgress();
+function saveProgress(){try{localStorage.setItem(PKEY,JSON.stringify(progress));}catch(e){}}
+
+function recordAnswer(q,correct){
+  const s=progress.q[q.id]||(progress.q[q.id]={n:0,c:0,w:0,lw:0,ts:0});
+  s.n++; if(correct){s.c++;s.lw=0;} else {s.w++;s.lw=1;}
+  s.ts=Date.now();
+  saveProgress();
+}
+function recordAttempt(mode,correct,total){
+  if(!total) return;
+  progress.attempts.push({mode,correct,total,pct:Math.round(correct/total*100),ts:Date.now()});
+  if(progress.attempts.length>200) progress.attempts=progress.attempts.slice(-200);
+  saveProgress();
+}
+/* questions whose most recent answer was wrong */
+function mistakeQuestions(){return BANK.filter(q=>{const s=progress.q[q.id];return s&&s.lw===1;});}
+/* per-topic mastery 0..1 (null = no data) */
+function topicMastery(){
+  const m={};
+  Object.keys(TOPICS).forEach(k=>{
+    let n=0,c=0;
+    BANK.filter(q=>q.t===k).forEach(q=>{const s=progress.q[q.id];if(s){n+=s.n;c+=s.c;}});
+    m[k]= n? c/n : null;
+  });
+  return m;
+}
+function resetProgress(){
+  if(!confirm('Reset all saved progress on this device? This clears your history, mastery, and review list.')) return;
+  progress={v:1,q:{},attempts:[]};
+  saveProgress();
+  renderDashboard();
+}
+
+/* ---------- adaptive ordering ----------
+   Weight favours weak topics, previously-missed and unseen questions;
+   mastered questions fade out. Falls back to plain shuffle when off. */
+function qWeight(q,tm){
+  let w=1;
+  const mastery=tm[q.t];
+  if(mastery!=null) w += (1-mastery)*0.8;
+  if(['legacy','interop'].includes(TOPICS[q.t].tag)) w += 0.4;
+  const s=progress.q[q.id];
+  if(!s){ w += 0.5; }
+  else {
+    const acc=s.c/s.n;
+    if(s.lw===1) w += 1.6;
+    w += (1-acc)*1.0;
+    if(acc===1 && s.n>=2) w *= 0.4;
+  }
+  return Math.max(0.1,w);
+}
+function orderQuestions(arr){
+  if(!state.adaptive) return shuffle(arr);
+  const tm=topicMastery();
+  return arr.map(q=>({q,k:Math.pow(Math.random(),1/qWeight(q,tm))}))
+            .sort((a,b)=>b.k-a.k).map(x=>x.q);
+}
+
+/* ---------- menu dashboard ---------- */
+function renderDashboard(){
+  const mistakes=mistakeQuestions().length;
+  const rc=document.getElementById('reviewCount');
+  const card=document.getElementById('reviewMode');
+  rc.textContent = mistakes ? mistakes : '';
+  card.classList.toggle('disabled', mistakes===0);
+
+  const dash=document.getElementById('dashboard');
+  const attempts=progress.attempts;
+  const hasData = attempts.length>0 || Object.keys(progress.q).length>0;
+  if(!hasData){ dash.style.display='none'; return; }
+  dash.style.display='block';
+
+  const mockAttempts=attempts.filter(a=>a.mode==='mock');
+  const pool = mockAttempts.length ? mockAttempts : attempts;
+  const best = pool.length ? Math.max(...pool.map(a=>a.pct)) : 0;
+  const bestLabel = mockAttempts.length ? 'Best mock' : 'Best score';
+
+  document.getElementById('dashStats').innerHTML=`
+    <div class="stat"><div class="statnum">${best}<span>%</span></div><div class="statlab">${bestLabel}</div></div>
+    <div class="stat"><div class="statnum">${attempts.length}</div><div class="statlab">Sessions done</div></div>
+    <div class="stat"><div class="statnum">${mistakes}</div><div class="statlab">To review</div></div>`;
+
+  const tm=topicMastery();
+  const rowsData=Object.entries(tm).filter(([k,v])=>v!=null).sort((a,b)=>a[1]-b[1]);
+  const bars=document.getElementById('dashBars');
+  if(rowsData.length){
+    bars.innerHTML='<div class="subhead">Sub-skill mastery (weakest first)</div>'+rowsData.map(([k,v])=>{
+      const pct=Math.round(v*100);
+      const col=pct<60?'var(--bad)':pct<80?'var(--warn)':'var(--ok)';
+      const t=TOPICS[k];
+      return `<div class="drow"><div class="dname">${t.name}<span class="tag ${t.tag}" style="font-size:8px">${t.tag}</span></div>
+        <div class="dbar"><i style="width:${pct}%;background:${col}"></i></div><div class="dpct">${pct}%</div></div>`;
+    }).join('');
+  } else { bars.innerHTML=''; }
+}
 
 /* ---------- theme ---------- */
 function applyThemeLabel(){
@@ -549,6 +695,7 @@ function toggleTheme(){
 }
 applyThemeLabel();
 initFeedback();
+renderDashboard();
 
 /* topic drill grid */
 const grid = document.getElementById('topicgrid');
@@ -565,6 +712,7 @@ Object.entries(TOPICS).forEach(([key,t])=>{
 function toggleTopics(){grid.classList.toggle('show');}
 function toggleStudy(){state.study=!state.study;document.getElementById('studyToggle').classList.toggle('on',state.study);}
 function toggleShuffle(){state.shuffle=!state.shuffle;document.getElementById('shuffleToggle').classList.toggle('on',state.shuffle);}
+function toggleAdaptive(){state.adaptive=!state.adaptive;document.getElementById('adaptiveToggle').classList.toggle('on',state.adaptive);}
 
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 
@@ -573,22 +721,28 @@ function startMode(mode){
   if(mode==='mock'){
     state.study=false;
     document.getElementById('studyToggle').classList.remove('on');
-    let pool=shuffle(BANK);
-    // weight the 51 toward legacy+interop: take all legacy/interop, fill rest with modern
-    const heavy=pool.filter(q=>['legacy','interop'].includes(TOPICS[q.t].tag));
-    const light=pool.filter(q=>TOPICS[q.t].tag==='modern');
-    state.queue=shuffle([...heavy, ...light]).slice(0, Math.min(51, BANK.length));
+    // overweight legacy+interop, then fill with modern; order each group adaptively
+    const heavy=orderQuestions(BANK.filter(q=>['legacy','interop'].includes(TOPICS[q.t].tag)));
+    const light=orderQuestions(BANK.filter(q=>TOPICS[q.t].tag==='modern'));
+    state.queue=[...heavy, ...light].slice(0, Math.min(51, BANK.length));
     document.getElementById('qmodelabel').textContent='Full mock';
     startTimer(61*60);
   } else if(mode==='weak'){
-    state.queue=shuffle(BANK.filter(q=>['legacy','interop'].includes(TOPICS[q.t].tag)));
+    state.queue=orderQuestions(BANK.filter(q=>['legacy','interop'].includes(TOPICS[q.t].tag)));
     document.getElementById('qmodelabel').textContent='Weak-area focus';
+  } else if(mode==='review'){
+    const qs=mistakeQuestions();
+    if(!qs.length){ renderDashboard(); return; }   // nothing to review
+    state.study=true;
+    document.getElementById('studyToggle').classList.add('on');
+    state.queue=orderQuestions(qs);
+    document.getElementById('qmodelabel').textContent='Review mistakes';
   }
   launch();
 }
 function startTopic(key){
   state.mode='topic';
-  state.queue=shuffle(BANK.filter(q=>q.t===key));
+  state.queue=orderQuestions(BANK.filter(q=>q.t===key));
   document.getElementById('qmodelabel').textContent=TOPICS[key].name;
   launch();
 }
@@ -648,6 +802,7 @@ function pick(btn){
   state.picked=orig;
   const correct = orig===q.a;
   state.results.push({t:q.t, correct});
+  recordAnswer(q, correct);
   state.answered=true;
   document.getElementById('nextBtn').disabled=false;
 
@@ -693,6 +848,7 @@ function finish(){
   const total=state.results.length||1;
   const correct=state.results.filter(r=>r.correct).length;
   const score=Math.round(correct/total*100);
+  recordAttempt(state.mode, correct, state.results.length);
   document.getElementById('finalScore').textContent=score;
 
   const band=document.getElementById('finalBand');

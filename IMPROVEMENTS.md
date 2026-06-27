@@ -84,9 +84,9 @@ Start with **Tier 1** (persist progress + review-mistakes mode + adaptive weight
 
 | Tier | Item | Status |
 | ---- | ---- | ------ |
-| 1 | Persist progress + review mistakes | Not started |
-| 1 | Adaptive weighting / spaced repetition | Not started |
-| 1 | Stats dashboard | Not started |
+| 1 | Persist progress + review mistakes | ✅ Shipped |
+| 1 | Adaptive weighting / spaced repetition | ✅ Shipped |
+| 1 | Stats dashboard | ✅ Shipped |
 | 2 | Code-snippet questions | Not started |
 | 2 | Grow bank + fix mock count | Not started |
 | 3 | Keyboard shortcuts | Not started |
