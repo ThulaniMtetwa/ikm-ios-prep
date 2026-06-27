@@ -361,11 +361,11 @@ function initFeedback(){
 const TOPICS = {
   mm:     {name:"Memory Management",            tag:"legacy",  doc:"https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/MemoryMgmt/Articles/MemoryMgmt.html"},
   objc:   {name:"Obj-C Classes & Messaging",    tag:"legacy",  doc:"https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/ProgrammingWithObjectiveC/Introduction/Introduction.html"},
-  interop:{name:"Swift ↔ Obj-C Interop",        tag:"interop", doc:"https://www.swift.org/documentation/cxx-interop/"},
-  conc:   {name:"Protocols, Blocks & GCD",      tag:"legacy",  doc:"https://developer.apple.com/documentation/dispatch"},
+  interop:{name:"Swift ↔ Obj-C Interop",        tag:"interop", doc:"https://developer.apple.com/documentation/swift/importing-objective-c-into-swift"},
+  conc:   {name:"Protocols, Blocks & GCD",      tag:"legacy",  doc:"https://developer.apple.com/documentation/dispatch/dispatchqueue"},
   cocoa:  {name:"Cocoa Touch Foundations",      tag:"legacy",  doc:"https://developer.apple.com/documentation/foundation"},
   vc:     {name:"View Controllers & Gestures",  tag:"legacy",  doc:"https://developer.apple.com/documentation/uikit/uiviewcontroller"},
-  draw:   {name:"UIView, Core Animation, Quartz",tag:"legacy", doc:"https://developer.apple.com/documentation/quartzcore"},
+  draw:   {name:"UIView, Core Animation, Quartz",tag:"legacy", doc:"https://developer.apple.com/documentation/quartzcore/calayer"},
   ib:     {name:"Interface Builder & AutoLayout",tag:"legacy", doc:"https://developer.apple.com/documentation/uikit/nslayoutconstraint"},
   table:  {name:"Table & Web Views",            tag:"legacy",  doc:"https://developer.apple.com/documentation/uikit/uitableview"},
   data:   {name:"Data Persistence",             tag:"modern",  doc:"https://developer.apple.com/documentation/coredata"},
@@ -375,7 +375,7 @@ const TOPICS = {
   net:    {name:"Networking & Security",        tag:"modern",  doc:"https://developer.apple.com/documentation/security/keychain_services"},
   debug:  {name:"Debugging & Instruments",      tag:"modern",  doc:"https://developer.apple.com/documentation/xcode/improving-your-app-s-performance"},
   ship:   {name:"Xcode & App Store Submission", tag:"modern",  doc:"https://developer.apple.com/documentation/xcode/distributing-your-app-for-beta-testing-and-releases"},
-  swift:  {name:"Swift Fundamentals & Generics",tag:"modern",  doc:"https://www.swift.org/documentation/"},
+  swift:  {name:"Swift Fundamentals & Generics",tag:"modern",  doc:"https://docs.swift.org/swift-book/documentation/the-swift-programming-language/"},
 };
 
 /* ---------- question bank ---------- */
@@ -383,186 +383,186 @@ const TOPICS = {
 const BANK = [
   // MEMORY MANAGEMENT
   {t:"mm",q:"Under manual reference counting, a method whose name begins with alloc, new, copy, or mutableCopy returns an object that…",
-    o:["You own and must balance with release or autorelease","The framework owns; you do nothing","Is already autoreleased at +0","Must be retained before first use"],a:0,
+    o:["You own and must balance with release or autorelease","The framework owns; you do nothing","Is already autoreleased at +0","Must be retained before first use"],a:0,doc:"https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/MemoryMgmt/Articles/mmRules.html",
     e:"The Cocoa <b>create rule</b>: those prefixes return a +1 retained object you own. Factory methods like <code>[NSString stringWithFormat:]</code> return autoreleased (+0) objects you do not own."},
   {t:"mm",q:"What does draining an autorelease pool do?",
-    o:["Sends release to every object that was autoreleased into it","Frees all heap memory immediately","Calls dealloc synchronously on retained objects","Resets the retain count of all live objects to zero"],a:0,
+    o:["Sends release to every object that was autoreleased into it","Frees all heap memory immediately","Calls dealloc synchronously on retained objects","Resets the retain count of all live objects to zero"],a:0,doc:"https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/MemoryMgmt/Articles/mmAutoreleasePools.html",
     e:"Draining sends a deferred <code>release</code> to each pooled object. It is the mechanism behind +0 returns; nothing is force-deallocated, objects with other owners survive."},
   {t:"mm",q:"In ARC, which capture safely breaks a retain cycle between a class and a closure stored on it, without risking a crash if the instance is gone?",
-    o:["[weak self]","[unowned self]","__strong self","@autoreleasepool"],a:0,
+    o:["[weak self]","[unowned self]","__strong self","@autoreleasepool"],a:0,doc:"https://docs.swift.org/swift-book/documentation/the-swift-programming-language/automaticreferencecounting/",
     e:"<code>weak</code> becomes nil after deallocation (optional). <code>unowned</code> also breaks the cycle but is a non-optional assumed-alive reference and crashes if accessed after deinit."},
   {t:"mm",q:"An Obj-C property declared @property (nonatomic, copy) NSString * exists because…",
-    o:["A mutable subclass instance could be passed and later mutated behind your back","copy is required for all object properties under ARC","strong cannot be used with NSString","It avoids a retain cycle"],a:0,
+    o:["A mutable subclass instance could be passed and later mutated behind your back","copy is required for all object properties under ARC","strong cannot be used with NSString","It avoids a retain cycle"],a:0,doc:"https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/ProgrammingWithObjectiveC/EncapsulatingData/EncapsulatingData.html",
     e:"<code>copy</code> defends against an <code>NSMutableString</code> being assigned and mutated by the caller afterwards. Standard for value-like object properties (NSString, NSArray, NSDictionary)."},
 
   // OBJ-C CLASSES & MESSAGING
   {t:"objc",q:"A category in Objective-C lets you…",
-    o:["Add methods to an existing class without subclassing","Add stored instance variables safely","Guarantee +load ordering across categories","Make existing methods private"],a:0,
+    o:["Add methods to an existing class without subclassing","Add stored instance variables safely","Guarantee +load ordering across categories","Make existing methods private"],a:0,doc:"https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/ProgrammingWithObjectiveC/CustomizingExistingClasses/CustomizingExistingClasses.html",
     e:"Categories add methods to any class (even framework ones). They cannot add ivars/stored properties (associated objects fake this), and overriding methods via a category has undefined precedence."},
   {t:"objc",q:"Sending an Objective-C message to nil…",
-    o:["Is a no-op that returns 0 / nil / zero-filled struct","Crashes with EXC_BAD_ACCESS","Throws NSInvalidArgumentException","Fails to compile"],a:0,
+    o:["Is a no-op that returns 0 / nil / zero-filled struct","Crashes with EXC_BAD_ACCESS","Throws NSInvalidArgumentException","Fails to compile"],a:0,doc:"https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/ProgrammingWithObjectiveC/WorkingwithObjects/WorkingwithObjects.html",
     e:"Messaging nil is legal and returns a zero value of the return type. This is why much Obj-C code omits nil checks. Distinct from Swift, where calling on nil requires optional handling."},
   {t:"objc",q:"`[obj respondsToSelector:@selector(foo:)]` is used to…",
-    o:["Check at runtime whether the receiver implements a method before calling it","Force the method to run on a background thread","Declare conformance to a protocol","Swizzle the method implementation"],a:0,
+    o:["Check at runtime whether the receiver implements a method before calling it","Force the method to run on a background thread","Declare conformance to a protocol","Swizzle the method implementation"],a:0,doc:"https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/ProgrammingWithObjectiveC/WorkingwithProtocols/WorkingwithProtocols.html",
     e:"Common with optional protocol methods (delegates) where the implementation may be absent. Returns a BOOL. Pairs with <code>performSelector:</code> or a direct guarded call."},
   {t:"objc",q:"In `@property` accessor semantics, what does the @dynamic directive tell the compiler?",
-    o:["Accessors are provided at runtime, do not synthesize them","Generate atomic accessors","The property is read-only","Use copy semantics"],a:0,
+    o:["Accessors are provided at runtime, do not synthesize them","Generate atomic accessors","The property is read-only","Use copy semantics"],a:0,doc:"https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/ProgrammingWithObjectiveC/EncapsulatingData/EncapsulatingData.html",
     e:"<code>@dynamic</code> suppresses auto-synthesis, promising the getter/setter exists at runtime (e.g. Core Data <code>NSManagedObject</code> properties resolved dynamically)."},
 
   // INTEROP
   {t:"interop",q:"An Obj-C object pointer property with NO nullability annotation imports into Swift as…",
-    o:["An implicitly unwrapped optional (e.g. String!)","A non-optional (String)","A plain optional (String?)","The Obj-C type unchanged (NSString)"],a:0,
+    o:["An implicitly unwrapped optional (e.g. String!)","A non-optional (String)","A plain optional (String?)","The Obj-C type unchanged (NSString)"],a:0,doc:"https://developer.apple.com/documentation/swift/designating-nullability-in-objective-c-apis",
     e:"Without an audited nullability region, pointers map to IUOs. Annotate with <code>nullable</code> / <code>nonnull</code> (or <code>NS_ASSUME_NONNULL_BEGIN</code>) to get clean <code>String?</code> / <code>String</code> mappings."},
   {t:"interop",q:"To call a Swift class from Objective-C, the Swift type must…",
-    o:["Be @objc-compatible (NSObject subclass or @objc members) and you import the generated -Swift.h header","Be declared in a bridging header","Be a struct marked @frozen","Conform to Codable"],a:0,
+    o:["Be @objc-compatible (NSObject subclass or @objc members) and you import the generated -Swift.h header","Be declared in a bridging header","Be a struct marked @frozen","Conform to Codable"],a:0,doc:"https://developer.apple.com/documentation/swift/importing-swift-into-objective-c",
     e:"Swift→Obj-C uses the auto-generated <code>&lt;Module&gt;-Swift.h</code>. Bridging headers go the other way (Obj-C→Swift). Swift structs/enums and generics are not visible to Obj-C."},
   {t:"interop",q:"Which Swift type does NOT automatically bridge to an Objective-C type?",
-    o:["A plain Swift struct with no @objc","String (↔ NSString)","Array (↔ NSArray)","Int (↔ NSNumber)"],a:0,
+    o:["A plain Swift struct with no @objc","String (↔ NSString)","Array (↔ NSArray)","Int (↔ NSNumber)"],a:0,doc:"https://developer.apple.com/documentation/swift/importing-objective-c-into-swift",
     e:"Structs, enums (non-@objc), tuples, and generics have no Obj-C representation. Foundation value types bridge automatically; to expose a struct you wrap it in an @objc class."},
   {t:"interop",q:"An Obj-C method `- (void)load:(void(^)(NSError *))completion;` imports into Swift as a closure parameter typed…",
-    o:["((Error?) -> Void)!","(Error?) -> Void","(NSError) -> Void","@escaping (Error) async -> Void"],a:0,
+    o:["((Error?) -> Void)!","(Error?) -> Void","(NSError) -> Void","@escaping (Error) async -> Void"],a:0,doc:"https://developer.apple.com/documentation/swift/importing-objective-c-into-swift",
     e:"Blocks bridge to Swift closures; an un-audited <code>NSError *</code> becomes <code>Error?</code>, and the un-annotated block pointer itself is an IUO. Closures crossing the boundary are escaping by default."},
 
   // PROTOCOLS / BLOCKS / GCD
   {t:"conc",q:"Calling DispatchQueue.main.sync { } from code already running on the main thread…",
-    o:["Deadlocks","Runs the block immediately and returns","Schedules it for the next runloop","Throws a fatalError caught by the runtime"],a:0,
+    o:["Deadlocks","Runs the block immediately and returns","Schedules it for the next runloop","Throws a fatalError caught by the runtime"],a:0,doc:"https://developer.apple.com/documentation/dispatch/dispatchqueue",
     e:"<code>sync</code> blocks the current thread until the target queue runs the work, but the main (serial) queue is busy waiting, so it can never run it. Use <code>async</code> or check you are off-main first."},
   {t:"conc",q:"A block in Objective-C that needs to mutate a captured local variable requires…",
-    o:["The variable marked __block","The variable marked __weak","Copying the block to the heap","An @synchronized region"],a:0,
+    o:["The variable marked __block","The variable marked __weak","Copying the block to the heap","An @synchronized region"],a:0,doc:"https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/Blocks/Articles/00_Introduction.html",
     e:"Captures are const copies by default. <code>__block</code> gives the block read/write access to the variable's storage. Swift closures capture mutable locals by reference without an annotation."},
   {t:"conc",q:"An @optional protocol method in Objective-C means the conforming class…",
-    o:["May omit the implementation; callers must check respondsToSelector:","Must implement it or fail to compile","Inherits a default empty implementation","Can only be a category"],a:0,
+    o:["May omit the implementation; callers must check respondsToSelector:","Must implement it or fail to compile","Inherits a default empty implementation","Can only be a category"],a:0,doc:"https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/ProgrammingWithObjectiveC/WorkingwithProtocols/WorkingwithProtocols.html",
     e:"Obj-C optional protocol requirements are not compiler-enforced; you guard the call with <code>respondsToSelector:</code>. Swift's pure protocols are all-required unless marked <code>@objc optional</code>."},
   {t:"conc",q:"To run independent units of work concurrently and be notified when ALL finish, you use…",
-    o:["A DispatchGroup with enter/leave and notify","A serial DispatchQueue","DispatchQueue.main.async repeatedly","NSLock around each task"],a:0,
+    o:["A DispatchGroup with enter/leave and notify","A serial DispatchQueue","DispatchQueue.main.async repeatedly","NSLock around each task"],a:0,doc:"https://developer.apple.com/documentation/dispatch/dispatchgroup",
     e:"<code>DispatchGroup</code> tracks outstanding work via enter/leave (or group-dispatched blocks) and fires <code>notify</code> when the count hits zero. The modern alternative is a structured-concurrency <code>TaskGroup</code>."},
 
   // COCOA TOUCH FOUNDATIONS
   {t:"cocoa",q:"By default, NSNotificationCenter delivers a posted notification…",
-    o:["Synchronously, on the thread that posted it","Asynchronously on the main thread","On a private serial queue","Only after the runloop idles"],a:0,
+    o:["Synchronously, on the thread that posted it","Asynchronously on the main thread","On a private serial queue","Only after the runloop idles"],a:0,doc:"https://developer.apple.com/documentation/foundation/notificationcenter",
     e:"Posting is synchronous: observers run on the posting thread before <code>post</code> returns. UI work in an observer triggered off-main must be dispatched to main yourself."},
   {t:"cocoa",q:"Key-Value Observing (KVO) fires change notifications only when the property is changed…",
-    o:["Through KVC-compliant accessors (or will/didChangeValueForKey:)","By direct ivar assignment","Inside a @synchronized block","After the object is added to an array"],a:0,
+    o:["Through KVC-compliant accessors (or will/didChangeValueForKey:)","By direct ivar assignment","Inside a @synchronized block","After the object is added to an array"],a:0,doc:"https://developer.apple.com/documentation/swift/using-key-value-observing-in-swift",
     e:"KVO swizzles the setter; bypassing it (direct ivar writes) skips notifications. Manual notification needs <code>willChangeValueForKey:</code> / <code>didChangeValueForKey:</code>."},
   {t:"cocoa",q:"NSArray vs NSMutableArray: which statement is correct?",
-    o:["NSMutableArray is a subclass of NSArray adding mutation methods","NSArray is mutable if created with arrayWithCapacity:","They are unrelated classes bridged at runtime","NSArray copies on every access"],a:0,
+    o:["NSMutableArray is a subclass of NSArray adding mutation methods","NSArray is mutable if created with arrayWithCapacity:","They are unrelated classes bridged at runtime","NSArray copies on every access"],a:0,doc:"https://developer.apple.com/documentation/foundation/nsmutablearray",
     e:"Classic class-cluster hierarchy. A property typed <code>NSArray *</code> with <code>copy</code> guards against being handed a mutable instance that the caller keeps mutating."},
 
   // VIEW CONTROLLERS & GESTURES
   {t:"vc",q:"On a view controller's first appearance, the lifecycle order is…",
-    o:["viewDidLoad → viewWillAppear → viewDidAppear","viewWillAppear → viewDidLoad → viewDidAppear","loadView → viewDidAppear → viewDidLoad","viewDidLoad → viewDidAppear → viewWillAppear"],a:0,
+    o:["viewDidLoad → viewWillAppear → viewDidAppear","viewWillAppear → viewDidLoad → viewDidAppear","loadView → viewDidAppear → viewDidLoad","viewDidLoad → viewDidAppear → viewWillAppear"],a:0,doc:"https://developer.apple.com/documentation/uikit/uiviewcontroller",
     e:"<code>viewDidLoad</code> runs once when the view is created; <code>viewWillAppear</code>/<code>viewDidAppear</code> run on every appearance. Put one-time setup in didLoad, refresh logic in willAppear."},
   {t:"vc",q:"A discrete gesture recognizer (e.g. UITapGestureRecognizer) reports its state as…",
-    o:[".possible then .recognized (alias .ended)",".began → .changed → .ended",".began then .cancelled",".changed repeatedly until .failed"],a:0,
+    o:[".possible then .recognized (alias .ended)",".began → .changed → .ended",".began then .cancelled",".changed repeatedly until .failed"],a:0,doc:"https://developer.apple.com/documentation/uikit/uigesturerecognizer",
     e:"Discrete recognizers jump straight to <code>.recognized</code>. Continuous ones (pan, pinch) go <code>.began → .changed → .ended</code>. Read <code>state</code> in the action to handle each phase."},
   {t:"vc",q:"To let a custom view's pan recognizer and a scroll view's recognizer fire at the same time, you…",
-    o:["Return true from gestureRecognizer(_:shouldRecognizeSimultaneouslyWith:)","Set cancelsTouchesInView = false","Lower the view's tag","Override hitTest to return nil"],a:0,
+    o:["Return true from gestureRecognizer(_:shouldRecognizeSimultaneouslyWith:)","Set cancelsTouchesInView = false","Lower the view's tag","Override hitTest to return nil"],a:0,doc:"https://developer.apple.com/documentation/uikit/uigesturerecognizerdelegate",
     e:"By default recognizers are mutually exclusive once one begins. The simultaneous-recognition delegate method opts into concurrent recognition for the specified pair."},
 
   // UIVIEW / CORE ANIMATION / QUARTZ
   {t:"draw",q:"Implicit (automatic) animations occur when you set an animatable CALayer property on…",
-    o:["A standalone layer not backing a UIView","Any layer, always","Only inside UIView.animate blocks","Only on the main layer of a window"],a:0,
+    o:["A standalone layer not backing a UIView","Any layer, always","Only inside UIView.animate blocks","Only on the main layer of a window"],a:0,doc:"https://developer.apple.com/documentation/quartzcore/calayer",
     e:"UIView-backed layers disable implicit animations outside an animation block. Free-standing layers animate property changes implicitly via the default <code>CATransaction</code>."},
   {t:"draw",q:"Inside `draw(_:)` you obtain the drawing context with…",
-    o:["UIGraphicsGetCurrentContext()","CGContextCreate()","layer.context","view.graphicsContext"],a:0,
+    o:["UIGraphicsGetCurrentContext()","CGContextCreate()","layer.context","view.graphicsContext"],a:0,doc:"https://developer.apple.com/documentation/uikit/uigraphicsgetcurrentcontext()",
     e:"UIKit pushes a valid <code>CGContext</code> before calling <code>draw(_:)</code>; fetch it with <code>UIGraphicsGetCurrentContext()</code>. Creating your own context there is wrong and wasteful."},
   {t:"draw",q:"A CALayer's contentsScale property should match the screen scale because…",
-    o:["It maps layer points to physical pixels, keeping rendering sharp on Retina","It controls animation duration","It sets the z-position","It enables rasterization caching"],a:0,
+    o:["It maps layer points to physical pixels, keeping rendering sharp on Retina","It controls animation duration","It sets the z-position","It enables rasterization caching"],a:0,doc:"https://developer.apple.com/documentation/quartzcore/calayer/contentsscale",
     e:"Set <code>layer.contentsScale = UIScreen.main.scale</code> (or the trait's scale) for custom-drawn or text layers, otherwise content renders blurry at 1x on 2x/3x displays."},
 
   // INTERFACE BUILDER / AUTOLAYOUT
   {t:"ib",q:"An IBOutlet to a subview inside a view controller is conventionally declared…",
-    o:["weak, because the view hierarchy already retains it","strong, to keep it alive","unowned, to avoid optionals","copy, to snapshot it"],a:0,
+    o:["weak, because the view hierarchy already retains it","strong, to keep it alive","unowned, to avoid optionals","copy, to snapshot it"],a:0,doc:"https://developer.apple.com/documentation/uikit/uiview",
     e:"The loaded view retains its subviews, so <code>weak</code> avoids redundant ownership. (Top-level nib objects historically needed strong; modern storyboards make subview outlets weak by default.)"},
   {t:"ib",q:"Adding NSLayoutConstraints programmatically to a view that still has translatesAutoresizingMaskIntoConstraints = true causes…",
-    o:["Conflicting / unsatisfiable constraints at runtime","A compile error","The constraints to be silently ignored","Automatic constraint priority lowering"],a:0,
+    o:["Conflicting / unsatisfiable constraints at runtime","A compile error","The constraints to be silently ignored","Automatic constraint priority lowering"],a:0,doc:"https://developer.apple.com/documentation/uikit/uiview/translatesautoresizingmaskintoconstraints",
     e:"The autoresizing mask is converted into its own constraints that clash with yours. Set the flag to <code>false</code> on any view you constrain manually."},
   {t:"ib",q:"Content hugging priority controls a view's resistance to…",
-    o:["Growing larger than its intrinsic content size","Shrinking below its intrinsic size","Moving off-screen","Being removed from the hierarchy"],a:0,
+    o:["Growing larger than its intrinsic content size","Shrinking below its intrinsic size","Moving off-screen","Being removed from the hierarchy"],a:0,doc:"https://developer.apple.com/documentation/uikit/uiview/contenthuggingpriority(for:)",
     e:"Hugging = resist getting bigger. <b>Compression resistance</b> = resist getting smaller. Raise hugging on a label you want to stay tight when its sibling should stretch."},
 
   // TABLE & WEB VIEWS
   {t:"table",q:"dequeueReusableCell(withIdentifier:for:) differs from the version without the indexPath in that it…",
-    o:["Always returns a non-nil cell and requires the identifier to be registered","Can return nil if no cell is available","Skips cell reuse entirely","Runs on a background queue"],a:0,
+    o:["Always returns a non-nil cell and requires the identifier to be registered","Can return nil if no cell is available","Skips cell reuse entirely","Runs on a background queue"],a:0,doc:"https://developer.apple.com/documentation/uikit/uitableview/dequeuereusablecell(withidentifier:for:)",
     e:"The <code>for:</code> variant guarantees a cell (creating one if needed) and traps if the identifier was never registered. The legacy variant may return nil, requiring a manual alloc fallback."},
   {t:"table",q:"Janky scrolling when cells show downloaded images is most directly fixed by…",
-    o:["Decoding/resizing images off the main thread, then assigning on main, and cancelling on reuse","Increasing the cell height","Using more reuse identifiers","Disabling clipsToBounds"],a:0,
+    o:["Decoding/resizing images off the main thread, then assigning on main, and cancelling on reuse","Increasing the cell height","Using more reuse identifiers","Disabling clipsToBounds"],a:0,doc:"https://developer.apple.com/documentation/uikit/uitableviewcell/prepareforreuse()",
     e:"Image decode is CPU-heavy and blocks the main thread per frame. Do it in the background, hop to main to set, and cancel stale loads in <code>prepareForReuse</code> to avoid wrong-image flashes."},
 
   // DATA PERSISTENCE
   {t:"data",q:"UserDefaults is the right store for…",
-    o:["Small preference values like flags and last-selected tab","Auth tokens and passwords","Large binary blobs and images","Relational object graphs"],a:0,
+    o:["Small preference values like flags and last-selected tab","Auth tokens and passwords","Large binary blobs and images","Relational object graphs"],a:0,doc:"https://developer.apple.com/documentation/foundation/userdefaults",
     e:"Defaults are unencrypted plist-backed key/values. Secrets belong in the Keychain; large/structured data in files or Core Data/SQLite."},
   {t:"data",q:"An NSManagedObjectContext is…",
-    o:["Not thread-safe; confine access to its queue via perform/performAndWait","Fully thread-safe and lock-free","Shared safely across threads if read-only","Automatically synchronized by the coordinator"],a:0,
+    o:["Not thread-safe; confine access to its queue via perform/performAndWait","Fully thread-safe and lock-free","Shared safely across threads if read-only","Automatically synchronized by the coordinator"],a:0,doc:"https://developer.apple.com/documentation/coredata/nsmanagedobjectcontext",
     e:"Each context owns a queue (main or private). Touching managed objects off their context's queue is a data race. Use <code>perform</code>/<code>performAndWait</code> and pass <code>objectID</code>s between contexts."},
   {t:"data",q:"In the Core Data stack, the persistent store coordinator sits…",
-    o:["Between managed object contexts and the persistent store(s)","Above the contexts as a UI layer","Inside each managed object","Between the model and the schema migration"],a:0,
+    o:["Between managed object contexts and the persistent store(s)","Above the contexts as a UI layer","Inside each managed object","Between the model and the schema migration"],a:0,doc:"https://developer.apple.com/documentation/coredata/nspersistentstorecoordinator",
     e:"Contexts talk to the coordinator, which talks to the store (typically SQLite). <code>NSPersistentContainer</code> wires the model, coordinator, store, and a main-queue view context together."},
 
   // NOTIFICATIONS
   {t:"notif",q:"Receiving remote push notifications requires the app to…",
-    o:["Register with APNs and forward the returned device token to your server","Only request UNUserNotificationCenter authorization","Enable Background Fetch alone","Schedule a UNTimeIntervalNotificationTrigger"],a:0,
+    o:["Register with APNs and forward the returned device token to your server","Only request UNUserNotificationCenter authorization","Enable Background Fetch alone","Schedule a UNTimeIntervalNotificationTrigger"],a:0,doc:"https://developer.apple.com/documentation/usernotifications/registering-your-app-with-apns",
     e:"Call <code>registerForRemoteNotifications()</code>, receive the token in the app delegate callback, and send it to your push backend. Authorization for displaying alerts is a separate prompt."},
   {t:"notif",q:"Before any local notification will display an alert, you must…",
-    o:["Request authorization for the desired options (alert/sound/badge)","Add a background mode","Create an App Group","Register a category identifier"],a:0,
+    o:["Request authorization for the desired options (alert/sound/badge)","Add a background mode","Create an App Group","Register a category identifier"],a:0,doc:"https://developer.apple.com/documentation/usernotifications/asking-permission-to-use-notifications",
     e:"<code>UNUserNotificationCenter.current().requestAuthorization(options:)</code> gates alert/sound/badge. Silent provisional auth and time-sensitive interruptions are additional refinements."},
 
   // AUDIO / VIDEO / IMAGES
   {t:"av",q:"AVAudioPlayer vs AVPlayer: which is correct?",
-    o:["AVAudioPlayer plays local file audio; AVPlayer handles streaming and video","AVPlayer is audio-only; AVAudioPlayer plays video","Both require AVAudioEngine","AVAudioPlayer streams remote URLs natively"],a:0,
+    o:["AVAudioPlayer plays local file audio; AVPlayer handles streaming and video","AVPlayer is audio-only; AVAudioPlayer plays video","Both require AVAudioEngine","AVAudioPlayer streams remote URLs natively"],a:0,doc:"https://developer.apple.com/documentation/avfaudio/avaudioplayer",
     e:"<code>AVAudioPlayer</code> is for in-memory/local sound files. <code>AVPlayer</code> + <code>AVPlayerItem</code> handle remote/streamed media and video playback."},
   {t:"av",q:"The framework that replaced the deprecated AssetsLibrary for accessing the user's photo library is…",
-    o:["Photos (PHPhotoLibrary / PHAsset)","PhotoKit Legacy","UIImagePickerController only","Core Image"],a:0,
+    o:["Photos (PHPhotoLibrary / PHAsset)","PhotoKit Legacy","UIImagePickerController only","Core Image"],a:0,doc:"https://developer.apple.com/documentation/photokit",
     e:"The <b>Photos</b> framework (PhotoKit) supersedes AssetsLibrary. Access still requires an Info.plist usage string and a permission prompt; <code>PHPickerViewController</code> reads selections without full-library auth."},
 
   // CORE LOCATION / CORE MOTION
   {t:"sensor",q:"Requesting the user's location requires, at minimum…",
-    o:["An Info.plist usage-description key plus requestWhenInUse/AlwaysAuthorization","Only enabling the Location background mode","A paid developer account check","CMMotionManager startup"],a:0,
+    o:["An Info.plist usage-description key plus requestWhenInUse/AlwaysAuthorization","Only enabling the Location background mode","A paid developer account check","CMMotionManager startup"],a:0,doc:"https://developer.apple.com/documentation/corelocation/requesting-authorization-to-use-location-services",
     e:"Missing the <code>NSLocationWhenInUseUsageDescription</code> key means the prompt never shows and updates silently fail. Authorization level (when-in-use vs always) gates background delivery."},
   {t:"sensor",q:"Fused, high-rate device attitude (roll/pitch/yaw from gyro + accelerometer) comes from…",
-    o:["CMMotionManager device-motion updates (Core Motion)","CLLocationManager heading","UIAccelerometer (deprecated) raw values","CMAltimeter"],a:0,
+    o:["CMMotionManager device-motion updates (Core Motion)","CLLocationManager heading","UIAccelerometer (deprecated) raw values","CMAltimeter"],a:0,doc:"https://developer.apple.com/documentation/coremotion/cmmotionmanager",
     e:"<code>CMMotionManager.startDeviceMotionUpdates</code> gives sensor-fused attitude. Raw accelerometer/gyro are also available but unfiltered; the old <code>UIAccelerometer</code> API is long deprecated."},
 
   // NETWORKING / SECURITY
   {t:"net",q:"App Transport Security, by default, requires outbound connections to…",
-    o:["Use HTTPS with TLS 1.2+; plain HTTP needs an explicit exception","Use a pinned certificate","Run through a VPN","Be limited to GET requests"],a:0,
+    o:["Use HTTPS with TLS 1.2+; plain HTTP needs an explicit exception","Use a pinned certificate","Run through a VPN","Be limited to GET requests"],a:0,doc:"https://developer.apple.com/documentation/bundleresources/information-property-list/nsapptransportsecurity",
     e:"ATS blocks cleartext HTTP unless you add an <code>NSAppTransportSecurity</code> exception (discouraged, often rejected). It also enforces minimum TLS version and cipher strength."},
   {t:"net",q:"The correct place to persist a user's session/auth token is…",
-    o:["Keychain Services","UserDefaults","A plist in Documents","An in-memory singleton only"],a:0,
+    o:["Keychain Services","UserDefaults","A plist in Documents","An in-memory singleton only"],a:0,doc:"https://developer.apple.com/documentation/security/keychain_services",
     e:"Keychain entries are encrypted and survive reinstall/iCloud per the chosen accessibility class. Defaults and plain files are unencrypted and inappropriate for secrets."},
   {t:"net",q:"A URLSession dataTask completion handler, by default, is invoked on…",
-    o:["A background delegate queue, so UI updates must be dispatched to main","The main thread always","The thread that created the task","A serial queue named .main"],a:0,
+    o:["A background delegate queue, so UI updates must be dispatched to main","The main thread always","The thread that created the task","A serial queue named .main"],a:0,doc:"https://developer.apple.com/documentation/foundation/urlsession",
     e:"Unless you supply a delegate queue, completion runs off-main. Touching UIKit from there is a violation; hop to <code>DispatchQueue.main</code> (or mark the call site <code>@MainActor</code>)."},
 
   // DEBUGGING / INSTRUMENTS
   {t:"debug",q:"To locate a retain cycle that leaks memory at runtime you use…",
-    o:["The Memory Graph Debugger and/or Instruments Leaks & Allocations","The Time Profiler","Address Sanitizer's UI tab","The View Hierarchy Debugger"],a:0,
+    o:["The Memory Graph Debugger and/or Instruments Leaks & Allocations","The Time Profiler","Address Sanitizer's UI tab","The View Hierarchy Debugger"],a:0,doc:"https://developer.apple.com/documentation/xcode/gathering-information-about-memory-use",
     e:"The Memory Graph shows strong-reference loops; Leaks/Allocations track growth and unreleased objects. Time Profiler is for CPU hotspots, not memory."},
   {t:"debug",q:"The Instruments Time Profiler is used to…",
-    o:["Sample CPU usage and find hot code paths","Detect over-released objects","Measure network latency","Find AutoLayout conflicts"],a:0,
+    o:["Sample CPU usage and find hot code paths","Detect over-released objects","Measure network latency","Find AutoLayout conflicts"],a:0,doc:"https://developer.apple.com/documentation/xcode/improving-your-app-s-performance",
     e:"It periodically samples the call stack to show where CPU time is spent. For UI hitches, the <b>Hangs</b> / Core Animation instruments are more targeted."},
 
   // XCODE / SHIP
   {t:"ship",q:"A build submitted to the App Store must be signed with…",
-    o:["A distribution certificate and an App Store provisioning profile","A development certificate","An ad-hoc profile","No profile if using Xcode Cloud"],a:0,
+    o:["A distribution certificate and an App Store provisioning profile","A development certificate","An ad-hoc profile","No profile if using Xcode Cloud"],a:0,doc:"https://developer.apple.com/documentation/xcode/distributing-your-app-for-beta-testing-and-releases",
     e:"Development certs/profiles are for debugging on registered devices. App Store distribution needs the distribution identity and matching provisioning profile (Xcode's automatic signing handles this when configured)."},
   {t:"ship",q:"dSYM files are needed to…",
-    o:["Symbolicate crash reports back to readable function names and line numbers","Sign the app bundle","Store provisioning entitlements","Compress app thinning slices"],a:0,
+    o:["Symbolicate crash reports back to readable function names and line numbers","Sign the app bundle","Store provisioning entitlements","Compress app thinning slices"],a:0,doc:"https://developer.apple.com/documentation/xcode/adding-identifiable-symbol-names-to-a-crash-report",
     e:"Release builds strip symbols; the <code>.dSYM</code> maps stripped addresses back to source. Upload it (or enable Xcode/Crashlytics upload) so crash logs are human-readable."},
 
   // SWIFT FUNDAMENTALS / GENERICS
   {t:"swift",q:"The core difference between a Swift struct and a class is…",
-    o:["struct is a value type (copied on assignment); class is a reference type (shared)","struct cannot have methods","class cannot conform to protocols","struct is always stored on the heap"],a:0,
+    o:["struct is a value type (copied on assignment); class is a reference type (shared)","struct cannot have methods","class cannot conform to protocols","struct is always stored on the heap"],a:0,doc:"https://docs.swift.org/swift-book/documentation/the-swift-programming-language/classesandstructures/",
     e:"Value semantics mean each copy is independent (copy-on-write for std collections). Classes share identity and support inheritance and deinit; reach for them when identity or reference sharing is required."},
   {t:"swift",q:"guard let differs from if let in that…",
-    o:["guard requires an else that exits the scope, and the binding stays available afterwards","if let binds for the whole function","guard cannot bind multiple optionals","if let exits the function on failure"],a:0,
+    o:["guard requires an else that exits the scope, and the binding stays available afterwards","if let binds for the whole function","guard cannot bind multiple optionals","if let exits the function on failure"],a:0,doc:"https://docs.swift.org/swift-book/documentation/the-swift-programming-language/controlflow/",
     e:"<code>guard let</code> enforces early exit and keeps the unwrapped value in the enclosing scope, reducing nesting. <code>if let</code> scopes the binding to its own block."},
   {t:"swift",q:"In `func process<T: Equatable>(_ items: [T])`, the `: Equatable` is…",
-    o:["A type constraint requiring T to conform to Equatable","A return type","A default value","An associated type"],a:0,
+    o:["A type constraint requiring T to conform to Equatable","A return type","A default value","An associated type"],a:0,doc:"https://docs.swift.org/swift-book/documentation/the-swift-programming-language/generics/",
     e:"Constraints let the generic body use the conformance's API (here, <code>==</code>). For richer constraints use a <code>where</code> clause, e.g. <code>where T.Element: Hashable</code>."},
   {t:"swift",q:"A closure stored as a property that captures self strongly will, on a class instance, typically cause…",
-    o:["A retain cycle unless self is captured weakly","A compile error","An immediate crash","Automatic deallocation of self"],a:0,
+    o:["A retain cycle unless self is captured weakly","A compile error","An immediate crash","Automatic deallocation of self"],a:0,doc:"https://docs.swift.org/swift-book/documentation/the-swift-programming-language/automaticreferencecounting/",
     e:"self holds the closure, the closure holds self. Break it with <code>[weak self]</code> (then guard) or <code>[unowned self]</code> when the lifetimes are guaranteed."},
 ];
 
@@ -816,9 +816,10 @@ function pick(btn){
     });
     const ex=document.getElementById('explain');
     const t=TOPICS[q.t];
+    const docUrl = q.doc || t.doc;
     const docCta = correct
-      ? `<br><a class="doclink" href="${t.doc}" target="_blank" rel="noopener">${t.name} reference</a>`
-      : `<div class="docprompt">Read the official documentation to lock this in:<a class="docbtn" href="${t.doc}" target="_blank" rel="noopener">${t.name} · official documentation</a></div>`;
+      ? `<br><a class="doclink" href="${docUrl}" target="_blank" rel="noopener">${t.name} reference</a>`
+      : `<div class="docprompt">Read the official documentation to lock this in:<a class="docbtn" href="${docUrl}" target="_blank" rel="noopener">${t.name} · official documentation</a></div>`;
     ex.innerHTML=`<div class="verdict ${correct?'ok':'bad'}">${correct?'✓ Correct':'✗ Incorrect'}</div>${q.e}${docCta}`;
     ex.classList.add('show');
   } else {
